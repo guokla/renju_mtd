@@ -32,7 +32,7 @@ private:
     int hold = 0;
     int order = 0;
     int limit = 20000;
-    int rangenum = 11;
+    int rangenum = 13;
     bool runing = true, openlog = false;
     QTime t1, t2;
     int count=0, ABcut=0, delta=0;  // 节点数、剪枝数

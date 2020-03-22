@@ -15,9 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     memset(valTab, 0, sizeof(valTab));
     memset(priorTab, 0, sizeof(priorTab));
     memset(isdraw, false, sizeof(isdraw));
-    H[0] = new HASHITEM[HASH_TABLE_SIZE];
-    H[1] = new HASHITEM[HASH_TABLE_SIZE];
-    H[2] = new HASHITEM[HASH_TABLE_SIZE];
+    H[0] = new HASHITEM[HASH_TABLE_SIZE]();
+    H[1] = new HASHITEM[HASH_TABLE_SIZE]();
+    H[2] = new HASHITEM[HASH_TABLE_SIZE]();
 
     strTab[0] = ' ';
     strTab[1] = 'M';
@@ -173,7 +173,9 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
         for(int i = 0; i < N; i++)for(int j = 0; j < N; j++){
             if(chess[i][j] == 0 && vis[2][i][j] > 0){
                 Pos newMove(i, j);
-                newMove.value = valueChess(i, j, key, &p1) + 0.5*valueChess(i, j, 3-key, &p2);
+                powerOperation(i, j, FLAGS_POWER_CONDESE, key);
+                newMove.value = 0.5*valueChess(i, j, key, &p1) + 0.5*valueChess(i, j, 3-key, &p2) + evaluate(key);
+                powerOperation(i, j, FLAGS_POWER_RELEASE, key);
                 moves.push_back(newMove);
             }
         }
@@ -721,6 +723,7 @@ void MainWindow::dealSignal(const QString &str)
 
     // 简单判定，如果是必应着法直接落子
     valueChess(newMove.x, newMove.y, 3-hold, &newMove.a3);
+    valueChess(newMove.x, newMove.y, hold, &newMove.a1);
     if(newMove.a3 >= 10000 || newMove.a1 >= 10000){
         moveQueue.push_back(newMove);
         powerOperation(newMove.x, newMove.y, FLAGS_POWER_CONDESE, hold);
@@ -728,7 +731,7 @@ void MainWindow::dealSignal(const QString &str)
         hold = EXCHANGE - hold;
         runing = false;
         QString temp;
-        temp.sprintf("[绝对先手: %2d,%2d]\n", newMove.x, newMove.y);
+        temp.sprintf("[绝对先手: %2d,%2d]\n\n", newMove.x, newMove.y);
         buffer += temp;
         return;
     }
@@ -816,6 +819,9 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                     powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
                     checkWinner(result.x, result.y, true);
                     hold = EXCHANGE - hold;
+                    QString temp;
+                    temp.sprintf("[PVS: 结束,%2d,%2d], time: %.3f s\n\n", result.x, result.y, t2.elapsed()/1000.0);
+                    buffer += temp;
                 }
             }
         }
@@ -856,6 +862,9 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                         powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
                         checkWinner(result.x, result.y, true);
                         hold = EXCHANGE - hold;
+                        QString temp;
+                        temp.sprintf("[MTD: 结束,%2d,%2d], time: %.3f s\n\n", result.x, result.y, t2.elapsed()/1000.0);
+                        buffer += temp;
                     }
                 }
             }
