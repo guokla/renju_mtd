@@ -155,29 +155,40 @@ void MainWindow::on_action_Help_triggered()
     ui->statusBar->showMessage(tr("启用提示"), 5000);
     getPosition(x, y, hold, 1);
 
-//    if(inside(x, y)){
-//        valueChess(x, y, hold, &p1);
-//        Pos move = {x, y, 0, p1};
-//        moveQueue.push_back(move);
-//        powerOperation(x, y, FLAGS_POWER_CONDESE, hold);
-//        checkWinner(x, y, true);
-//        hold = EXCHANGE - hold;
-//    }else{
-//        QMessageBox::warning(this, tr("凉凉"), tr("电脑认为已经无法下了。"));
-//    }
+    if(inside(x, y) && order < 3 && runing==false){
+        valueChess(x, y, hold, &p1);
+        Pos move = {x, y, 0, p1};
+        moveQueue.push_back(move);
+        powerOperation(x, y, FLAGS_POWER_CONDESE, hold);
+        checkWinner(x, y, true);
+        hold = EXCHANGE - hold;
+    }
 }
 
 void MainWindow::getPosition(int &x, int &y, int key, int flag)
 {
-    Pos newMove = Pos(20, 20, -10000, order+1, 0), bestmove;
-    QVector<Pos> path;
+    if(flag > 2){
+        int p1, p2;
+        QVector<Pos> moves;
+        for(int i = 0; i < N; i++)for(int j = 0; j < N; j++){
+            if(chess[i][j] == 0 && vis[2][i][j] > 0){
+                Pos newMove(i, j);
+                newMove.value = valueChess(i, j, key, &p1) + 0.5*valueChess(i, j, 3-key, &p2);
+                moves.push_back(newMove);
+            }
+        }
+        qSort(moves.begin(), moves.end(), greater<Pos>());
+        x = moves.front().x;
+        y = moves.front().y;
+        return;
+    }
 
-    if(flag){}
 
     if(order == 0){
         x = N / 2;
         y = N / 2;
-    }else if(order == 1){
+    }
+    else if(order == 1){
         do{
             x = moveQueue.first().x + qrand() % 3 - 1;
             y = moveQueue.first().y + qrand() % 3 - 1;
@@ -197,7 +208,6 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
         }else{
             qDebug() << "wrong operation";
         }
-
     }
 }
 
@@ -421,7 +431,7 @@ bool MainWindow::distribution(int key, int time)
     runing = true;
     MyThread *myt = new MyThread();
     myt->moveToThread(&thread);
-    myt->initial(H[algoFlag], Z, hash, chess, vis, key, time, depth, algoFlag);
+    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag);
     myt->connect(&thread, &QThread::finished, myt, &QObject::deleteLater); // Mythread与QThread关联
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);
@@ -725,28 +735,31 @@ void MainWindow::dealSignal(const QString &str)
 
     // running标志
     const int judge = recive[4];
+    callFunction(newMove, 0, judge);
+}
+
+void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
 
     if(algoFlag == 1)
     {
         // 算杀
         if(judge == 1 && inside(newMove))
         {
-            // 如果着法有效，则更换result
             result = newMove;
             QString temp;
             temp.sprintf("[kill: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
-            // 已经必杀时不再往下计算
             if(newMove.value < R_INFINTETY){
                 depth += 2;
                 distribution(hold, limit_kill - t2.elapsed());
             }
         }
-        // 超时、未获取最佳走法，胜利标志，必应着法
         if(judge == 0 || !inside(newMove) || newMove.value >= R_INFINTETY)
         {
             if(inside(result) && result.value >= R_INFINTETY)
             {
+                if(depth==1)
+                    getPosition(result.x, result.y, hold, 3);
                 moveQueue.push_back(result);
                 powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
                 checkWinner(result.x, result.y, true);
@@ -759,15 +772,14 @@ void MainWindow::dealSignal(const QString &str)
                 return;
             }else{
                 depth = 1;
-                algoFlag = 0;
+                algoFlag = lock_algo;
                 result.clear();
                 t2.start();
                 runing = true;
                 distribution(hold, limit);
             }
         }
-    }else if(algoFlag == 0)
-    {
+    }else if(algoFlag == 0){
         // PVS
         if(judge == 1 && inside(newMove))
         {
@@ -785,6 +797,8 @@ void MainWindow::dealSignal(const QString &str)
             runing = false;
             if(inside(result))
             {
+                if(depth==1)
+                    getPosition(result.x, result.y, hold, 3);
                 moveQueue.push_back(result);
                 powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
                 checkWinner(result.x, result.y, true);
@@ -795,11 +809,57 @@ void MainWindow::dealSignal(const QString &str)
                 result.clear();
                 return;
             }else{
-                QMessageBox::warning(this, tr("投降"), tr("电脑认为已经无法下了。"));
+                getPosition(result.x, result.y, hold, 3);
+                if(inside(result))
+                {
+                    moveQueue.push_back(result);
+                    powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
+                    checkWinner(result.x, result.y, true);
+                    hold = EXCHANGE - hold;
+                }
             }
         }
+    }else if(algoFlag == 2){
+            // MTD
+            if(judge == 1 && inside(newMove))
+            {
+                result = newMove;
+                QString temp;
+                temp.sprintf("[MTD: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
+                buffer += temp;
+                if(newMove.value < R_INFINTETY){
+                    depth += 2;
+                    distribution(hold, limit - t2.elapsed());
+                }
+            }
+            if(judge == 0 || !inside(newMove) || result.value >= R_INFINTETY)
+            {
+                runing = false;
+                if(inside(result))
+                {
+                    if(depth==1)
+                        getPosition(result.x, result.y, hold, 3);
+                    moveQueue.push_back(result);
+                    powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
+                    checkWinner(result.x, result.y, true);
+                    hold = EXCHANGE - hold;
+                    QString temp;
+                    temp.sprintf("[MTD: 深度%d] = timeout, time: %.3f s\n\n", depth, t2.elapsed()/1000.0);
+                    buffer += temp;
+                    result.clear();
+                    return;
+                }else{
+                    getPosition(result.x, result.y, hold, 3);
+                    if(inside(result))
+                    {
+                        moveQueue.push_back(result);
+                        powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
+                        checkWinner(result.x, result.y, true);
+                        hold = EXCHANGE - hold;
+                    }
+                }
+            }
     }
-
 }
 
 int MainWindow::deepening(int origin, int& x, int& y){
@@ -995,16 +1055,24 @@ void MainWindow::update(QMutex& m, Pos& ret, const Pos ref, int key, int order, 
 
 void MainWindow::on_radioButton_clicked()
 {
-    algoFlag = true;
-    ui->radioButton_2->clearFocus();
-    ui->statusBar->showMessage(tr("采用PVS算法"), 0);
+    if(runing == false){
+        algoFlag = 0;
+        lock_algo = 0;
+        ui->radioButton_2->clearFocus();
+        ui->statusBar->showMessage(tr("采用PVS算法"), 0);
+    }else
+        ui->statusBar->showMessage(tr("运算中"), 0);
 }
 
 void MainWindow::on_radioButton_2_clicked()
 {
-    algoFlag = false;
-    ui->radioButton->clearFocus();
-    ui->statusBar->showMessage(tr("采用MTD-f算法"), 0);
+    if(runing==false){
+        algoFlag = 2;
+        lock_algo = 2;
+        ui->radioButton->clearFocus();
+        ui->statusBar->showMessage(tr("采用MTD-f算法"), 0);
+    }else
+        ui->statusBar->showMessage(tr("运算中"), 0);
 }
 
 void MainWindow::on_radioButton_9_clicked()

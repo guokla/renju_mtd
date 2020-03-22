@@ -6,10 +6,10 @@ struct Pos
     int x, y;
     int value, a1, a2, a3;
     bool operator< (const Pos &a)const{
-        return a.value > value;
+        return value < a.value;
     }
     bool operator> (const Pos &a)const{
-        return a.value < value;
+        return value > a.value;
     }
     bool operator==(const Pos &a) const{
         if(a.x == x && a.y == y)

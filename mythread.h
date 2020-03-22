@@ -37,7 +37,6 @@ private:
     QTime t1, t2;
     int count=0, ABcut=0, delta=0;  // 节点数、剪枝数
     int tag=0,sto=0,ref=0;          // 命中数、存储数、冲突数
-    int time_limit=0;               // 思考时间
     int depth;
     int algoFlag = 0;
 
@@ -51,10 +50,9 @@ public:
                  int _vis[3][20][20], int key, int _limit, int _depth, int _algoFlag);
 
     // 局面计算函数
-    void showChess();
     int valueChess(int x, int y, int key, int *piority);
     int evaluate(int key);
-    void getPosition(int &x,int &y, int key, int flag);
+    void getPosition(Pos& ret, int key);
     void powerOperation(int x, int y, int flag, int key);
 
     // PVS搜索

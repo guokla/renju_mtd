@@ -118,7 +118,7 @@ private:
     int cur_x=0, cur_y=0;                       // 鼠标位置
     int px=0, py=0;                             // 鼠标位置对应的棋盘坐标
     int hold=BLACK;                             // 轮走方，默认BLACK
-    int algoFlag=0;                             // 算法使用标志
+    int algoFlag=0, lock_algo=0;                // 算法使用标志
     bool stop=false;                            // 计算标识，防止错刷屏幕, false为正常刷屏
     bool change=false;                          // 绘图标识，true表示棋盘有逆向变化(悔棋)
     bool painting=false;                        // 连续绘图标识
@@ -149,6 +149,7 @@ protected:
     // 根据策略获取落子位置
     void getPosition(int &x,int &y, int key, int flag);
     void powerOperation(int x, int y, int flag, int key);
+    void callFunction(Pos& newMove, int flag, const int& judge);
 
     // MTDF搜索
     void mtdf(Pos& bestmove, int origin, int f, int deep);
