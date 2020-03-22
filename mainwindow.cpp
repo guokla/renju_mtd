@@ -718,7 +718,7 @@ void MainWindow::dealSignal(const QString &str)
         hold = EXCHANGE - hold;
         runing = false;
         QString temp;
-        temp.sprintf("[绝对先手: %2d,%2d]\n", depth, newMove.x, newMove.y);
+        temp.sprintf("[绝对先手: %2d,%2d]\n", newMove.x, newMove.y);
         buffer += temp;
         return;
     }

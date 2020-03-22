@@ -173,16 +173,16 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
     score = 0;
 
     if (five >= 1)
-        score = Max(score, 100);
+        score = Max(score, 200);
 
     if (four >= 2)
-        score = Max(score, 50);
+        score = Max(score, 100);
 
     if (four >= 1 && jump+three >= 1)
-        score = Max(score, 40);
+        score = Max(score, 80);
 
     if (jump+three >= 2)
-        score = Max(score, 30);
+        score = Max(score, 50);
 
     score = Max(score, sleep_three + sleep_jump + 2*jump + 2*two + 2*three);
     score = Max(score, 3/(1+abs(x-7)+abs(y-7)));
@@ -354,7 +354,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
 
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if(chess[i][j] == 0 && vis[2][i][j] >= 2){
+            if(chess[i][j] == 0 && vis[2][i][j] >= 1){
                 k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
                 if(p1 + p2 > 0){
                     attackQueue.push_back(Pos{i, j, p1, p1});
