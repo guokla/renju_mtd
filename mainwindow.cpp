@@ -438,7 +438,7 @@ bool MainWindow::distribution(int key, int time)
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);
     thread.start();
-    emit startThread();
+    emit startThread(QString::number(guess));
     return true;
 }
 
@@ -704,8 +704,8 @@ int MainWindow::checkWinner(int x, int y, bool endFlag){
     return judge;
 }
 
-long long MainWindow::rand64(){
-    return qrand() ^ (qrand() << 15) ^ (qrand() << 30);
+unsigned long long MainWindow::rand64(){
+    return qrand() ^ (qrand() << 15) ^ (qrand() << 30) ^ (qrand() << 45);
 }
 
 void MainWindow::dealSignal(const QString &str)
@@ -833,6 +833,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 QString temp;
                 temp.sprintf("[MTD: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
                 buffer += temp;
+                guess = newMove.value;
                 if(newMove.value < R_INFINTETY){
                     depth += 2;
                     distribution(hold, limit - t2.elapsed());

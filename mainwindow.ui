@@ -226,10 +226,13 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="action_Help">
    <property name="text">
-    <string>提示(&amp;T)</string>
+    <string>提示(&amp;A)</string>
+   </property>
+   <property name="toolTip">
+    <string>提示(A)</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+T</string>
+    <string>Ctrl+A</string>
    </property>
   </action>
   <action name="action_Version">

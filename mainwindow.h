@@ -44,7 +44,7 @@
 #define EXCHANGE 3              // 交替参数宏
 #define ADVANTAGE 4             // 棋风参数宏
 
-#define R_INFINTETY  1000
+#define R_INFINTETY  200
 
 const long long HASH_TABLE_SIZE = 1 << 20;    // 哈希表大小
 
@@ -115,6 +115,7 @@ private:
     int tag=0,sto=0,ref=0;                      // 命中数、存储数、冲突数
     QTime t, t2;                                // 计时器
     int depth = 1;
+    int guess = 0;
     int cur_x=0, cur_y=0;                       // 鼠标位置
     int px=0, py=0;                             // 鼠标位置对应的棋盘坐标
     int hold=BLACK;                             // 轮走方，默认BLACK
@@ -176,7 +177,7 @@ protected:
     // 置换表操作
     bool lookup(int depth, int alpha, int beta, int &val, int flag);
     bool store(QMutex &m, int depth, int val, int hashf, long long hashIndex, int flag);
-    long long rand64();
+    unsigned long long rand64();
 
 // 槽函数，用于控件通信
 private slots:
@@ -198,7 +199,7 @@ private slots:
 public slots:
     void dealSignal(const QString &str);
 signals:
-    void startThread();
+    void startThread(const QString &str);
 };
 
 template <class T> struct less {

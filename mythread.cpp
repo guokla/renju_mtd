@@ -31,7 +31,7 @@ void MyThread::initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _has
     strTab[2] = 'O';
 }
 
-void MyThread::dowork()
+void MyThread::dowork(const QString& str)
 {
     Pos ret = Pos(20, 20, 0, 1+order);
     QVector<Pos> path;
@@ -44,7 +44,8 @@ void MyThread::dowork()
             }else if(algoFlag == 0){
                killSearch(ret, hold, depth, -2*R_INFINTETY,2*R_INFINTETY, path);
             }else if(algoFlag == 2){
-                mtdf(ret, hold, 0, depth);
+                int guess =str.toLong();
+                MTD(ret, hold, guess, depth);
             }
         }
         QString temp;
@@ -164,18 +165,18 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
     score = 0;
 
     if (five >= 1)
-        score = Max(score, 500);
+        score = Max(score, 200);
 
     if (four >= 2)
-        score = Max(score,  200);
+        score = Max(score,  100);
 
     if (four >= 1 && jump+three >= 1)
-        score = Max(score, 120);
-
-    if (jump+three >= 2)
         score = Max(score, 80);
 
-    score += sleep_two + 3*sleep_three + 3*sleep_jump + 4*jump + 4*two + 5*three;
+    if (jump+three >= 2)
+        score = Max(score, 50);
+
+    score += sleep_two + 2*sleep_three + 2*sleep_jump + 3*jump + 3*two + 3*three;
     score += 5/(1+abs(x-7)+abs(y-7));
 
     *piority = jump + 2*three + 100*four + 10000*five;
@@ -208,8 +209,8 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
         return alpha;
     }
 
-//    if(lookup(deep+order, alpha, beta, val))
-//        return val;
+    if(lookup(deep+order, alpha, beta, val))
+        return val;
 
     if (deep <= 0){
         val = -evaluate(3-key);
@@ -303,7 +304,7 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
         // 剪枝
         if (val >= beta){
             ABcut++;
-//            store(mutex, deep+order, beta, HASH_BETA, hashIndex);
+            store(mutex, deep+order, beta, HASH_BETA, hashIndex);
             return beta;
         }
 
@@ -316,7 +317,7 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
 
 
     }
-//    store(mutex, deep+order, alpha, hashf, hashBest);
+    store(mutex, deep+order, alpha, hashf, hashBest);
     return alpha;
 
 }
@@ -334,8 +335,8 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         return alpha;
     }
 
-//    if(lookup(deep+order, alpha, beta, val))
-//        return val;
+    if(lookup(deep+order, alpha, beta, val))
+        return val;
 
     if (deep <= 0){
         val = -evaluate(3-key);
@@ -422,44 +423,35 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
     return alpha;
 }
 
-void MyThread::mtdf(Pos& bestmove, int origin, int f, int deep)
+void MyThread::MTD(Pos& bestmove, int origin, int f, int deep)
 {
     int alpha, beta, best_value, test, speed[2]={0,0};
-    Pos newMove = Pos(20, 20, 0, order+1, 0), killer;
+    Pos newMove = Pos(20, 20, 0, order+1, 0);
     QVector<Pos> path;
 
-
-    alpha = -2*R_INFINTETY;
-    beta  = +2*R_INFINTETY;
+    alpha = -R_INFINTETY;
+    beta  = +R_INFINTETY;
     test  = f;
 
     // 结合二分查找和探测查找
     do{
-        best_value = alpha_beta(newMove, origin, deep, test-1, test, path, killer);
+        best_value = MT(newMove, origin, deep, test-1, test, path);
         if(best_value < test){
             // alpha结点，找自己最差的结点
-            beta = best_value;
-            speed[0]++; speed[1]=0;
-            if(speed[0] > 1)
-                test = (alpha+beta)/2;
-            else
-                test = best_value;
+            beta = test = best_value;
         }else{
             // beta结点，找自己最好的结点
             alpha = best_value;
             bestmove = newMove;
-            speed[1]++; speed[0]=0;
-            if(speed[1] > 1)
-                test = 1+(alpha+beta)/2;
-            else
-                test = best_value+1;
+            test = best_value+1;
         }
     }while(alpha < beta);
+    bestmove.value = best_value;
 }
 
-int MyThread::alpha_beta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path, Pos& killer)
+int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path)
 {
-    int i, j, val, p1, p2;
+    int i, j, val, p1, p2, cur=-R_INFINTETY, k;
     int hashf = HASH_ALPHA;
     long long hashIndex=0;
     Pos newMove;
@@ -487,12 +479,11 @@ int MyThread::alpha_beta(Pos& ret, int key, int deep, int alpha, int beta, QVect
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
             if (chess[i][j] == 0 && vis[2][i][j] >= 1){
-                valueChess(i, j, key, &p1);
-                valueChess(i, j, 3-key, &p2);
+                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
                 if(p1 + p2 > 0)
-                    attackQueue.push_back(Pos(i, j, p1, p1));
+                    attackQueue.push_back(Pos(i, j, k, p1));
                 else
-                    attackQueue.push_front(Pos(i, j, p1, p1));
+                    attackQueue.push_front(Pos(i, j, k, p1));
             }
         }
     }
@@ -511,47 +502,39 @@ int MyThread::alpha_beta(Pos& ret, int key, int deep, int alpha, int beta, QVect
 
         if (newMove.value <= -R_INFINTETY)
             continue;
-        if(vec_moves.size() > rangenum+5)
+        if(vec_moves.size() > rangenum)
             vec_moves.pop_back();
         vec_moves.push_back(newMove);
         qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
     }
 
-    qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
+//    qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
 
     // 遍历搜索树
     for(auto k: vec_moves){
 
-        // 执行试探测试
         path.push_back(k);
         powerOperation(k.x, k.y, FLAGS_POWER_CONDESE, key);
 
         hashIndex = hash;
 
-        val = - alpha_beta(ret, 3-key, deep-1, -beta, -alpha, path, killer);
+        val = - MT(ret, 3-key, deep-1, -beta, -alpha, path);
 
         powerOperation(k.x, k.y, FLAGS_POWER_RELEASE, key);
         path.pop_back();
 
-        // 剪枝
-
-        if (val >= beta){
-            ABcut++;
-            store(mutex, deep+order, beta, HASH_BETA, hashIndex);
-            update(mutex, ret, k, key, 1+order, beta);
-            return beta;
+        if(val > cur){
+            cur = val;
+            if(val > alpha){
+                alpha = val;
+                hashf = HASH_EXACT;
+                update(mutex, ret, k, key, 1+order, val);
+            }
+            if(val >= beta) break;
         }
-
-        if(val > alpha){
-            alpha = val;
-            hashf = HASH_EXACT;
-            update(mutex, ret, k, key, 1+order, val);
-        }
-
     }
-
     store(mutex, deep+order, alpha, hashf, hashIndex);
-    return alpha;
+    return cur;
 }
 
 void MyThread::update(QMutex& m, Pos& ret, const Pos ref, int key, int order, int val){

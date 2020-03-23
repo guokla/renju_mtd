@@ -17,7 +17,7 @@ signals:
     void resultReady(const QString &str);
 
 public slots:
-    void dowork();
+    void dowork(const QString &str);
 
 private:
     volatile bool isStop;
@@ -62,8 +62,8 @@ public:
 
     // MTDF搜索
     int deepening(int origin, int& x, int& y);
-    void mtdf(Pos& bestmove, int origin, int f, int deep);
-    int alpha_beta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path, Pos& killer);
+    void MTD(Pos& bestmove, int origin, int f, int deep);
+    int MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
     // 越界检查函数
     bool inline inside(int x, int y);
