@@ -176,7 +176,7 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
     if (jump+three >= 2)
         score = Max(score, 50);
 
-    score += sleep_two + 2*sleep_three + 2*sleep_jump + 3*jump + 3*two + 3*three;
+    score += sleep_two + 2*sleep_three + 2*sleep_jump + 3*jump + 3*two + 3*three - four;
     score += 5/(1+abs(x-7)+abs(y-7));
 
     *piority = jump + 2*three + 100*four + 10000*five;
@@ -278,8 +278,8 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
     qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
 
     if(origin == key && vec_moves[0].a1 >= 10000){
-        update(mutex, ret, vec_moves[0], key, ret.a1, R_INFINTETY);
-        return R_INFINTETY;
+        update(mutex, ret, vec_moves[0], key, ret.a1, beta);
+        return beta;
     }
 
     for(auto move: vec_moves){
@@ -287,21 +287,12 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
         powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
         path.push_back(move);
 
-        if(move == vec_moves[0]){
-            val = - deepSearch(ret, origin, EXCHANGE - key, deep - 1, -beta, -alpha, path);
-        }
-        else{
-            val = - deepSearch(ret, origin, EXCHANGE - key, deep - 1, -alpha-1, -alpha, path);
-            if(alpha < val && val < beta){
-                val = - deepSearch(ret, origin, EXCHANGE - key, deep - 1, -beta, -alpha, path);
-            }
-        }
+        val = - deepSearch(ret, origin, 3-key, deep - 1, -beta, -alpha, path);
 
         hashIndex = hash;
         path.pop_back();
         powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
 
-        // 剪枝
         if (val >= beta){
             ABcut++;
             store(mutex, deep+order, beta, HASH_BETA, hashIndex);
@@ -314,8 +305,6 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
             hashBest = hashIndex;
             update(mutex, ret, move, key, 1+order, val);
         }
-
-
     }
     store(mutex, deep+order, alpha, hashf, hashBest);
     return alpha;
@@ -335,12 +324,12 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         return alpha;
     }
 
-    if(lookup(deep+order, alpha, beta, val))
-        return val;
+//    if(lookup(deep+order, alpha, beta, val))
+//        return val;
 
     if (deep <= 0){
         val = -evaluate(3-key);
-        store(mutex, 1+order, val, HASH_EXACT, hash);
+//        store(mutex, 1+order, val, HASH_EXACT, hash);
         return val;
     }
 
@@ -387,7 +376,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
         path.push_back(move);
 
-        if(move == vec_moves[0]){
+        if(hashf == HASH_EXACT){
             val = - killSearch(ret, EXCHANGE - key, deep - 1, -beta, -alpha, path);
         }
         else{
@@ -406,7 +395,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
 
         if (val >= beta){
             ABcut++;
-            store(mutex, deep+order, beta, HASH_BETA, hashIndex);
+//            store(mutex, deep+order, beta, HASH_BETA, hashIndex);
             return beta;
         }
 
@@ -419,7 +408,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
 
 
     }
-    store(mutex, deep+order, alpha, hashf, hashBest);
+//    store(mutex, deep+order, alpha, hashf, hashBest);
     return alpha;
 }
 
@@ -589,7 +578,6 @@ int MyThread::evaluate(int key)
         return -R_INFINTETY;
 
     if(d_prior>=1)  d_val *=1.5;
-    if(o_prior>=1)  o_val *=1.5;
     return d_val - 1.5*o_val;
 }
 

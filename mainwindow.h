@@ -33,6 +33,7 @@
 #include <QMutex>
 #include <QThread>
 
+
 #include "area.h"
 #include "pos.h"
 #include "zobrist.h"

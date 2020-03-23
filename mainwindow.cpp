@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     area = new Area(48, 67, 630, 650);
 
-    qsrand(12345678);
+    qsrand(QTime::currentTime().msec());
 
     for(int i = 0; i < N; i++)
         for(int j = 0; j < N; j++){
@@ -190,17 +190,18 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
         x = N / 2;
         y = N / 2;
     }
-    else if(order == 1){
-        do{
-            x = moveQueue.first().x + qrand() % 3 - 1;
-            y = moveQueue.first().y + qrand() % 3 - 1;
-        }while(x < 0 || x >= 15 || y < 0 || y >= 15 || chess[x][y] != 0);
-    }else if(order == 2){
-        do{
-            x = moveQueue.first().x + qrand() % 5 - 2;
-            y = moveQueue.first().y + qrand() % 5 - 2;
-        }while(x < 0 || x >= 15 || y < 0 || y >= 15 || chess[x][y] != 0);
-    }else{
+//    else if(order == 1){
+//        do{
+//            x = moveQueue.first().x + qrand() % 3 - 1;
+//            y = moveQueue.first().y + qrand() % 3 - 1;
+//        }while(x < 0 || x >= 15 || y < 0 || y >= 15 || chess[x][y] != 0);
+//    }else if(order == 2){
+//        do{
+//            x = moveQueue.first().x + qrand() % 5 - 2;
+//            y = moveQueue.first().y + qrand() % 5 - 2;
+//        }while(x < 0 || x >= 15 || y < 0 || y >= 15 || chess[x][y] != 0);
+//    }
+    else{
         if(!runing){
             depth = 1;
             algoFlag = 1;
