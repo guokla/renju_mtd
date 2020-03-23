@@ -434,7 +434,7 @@ bool MainWindow::distribution(int key, int time)
     runing = true;
     MyThread *myt = new MyThread();
     myt->moveToThread(&thread);
-    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag);
+    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog);
     myt->connect(&thread, &QThread::finished, myt, &QObject::deleteLater); // Mythread与QThread关联
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);
@@ -546,7 +546,7 @@ int MainWindow::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, i
         // 剪枝
         if (val >= beta){
             ABcut++;
-            store(mutex, deep+order, beta, HASH_BETA, hashIndex, 1);
+            if(runing) store(mutex, deep+order, beta, HASH_BETA, hashIndex, 1);
             return beta;
         }
 
@@ -716,10 +716,10 @@ void MainWindow::dealSignal(const QString &str)
     thread.wait();
     for(i = 0; i < j; i++)
         recive[i]=str.section(',', i+1, i+1).toLong();
-    if(openlog){
-        qDebug() << str;
-        qDebug() << "result=" << result.x << result.y << result.value << result.a1;
-    }
+//    if(openlog){
+//        qDebug() << str;
+//        qDebug() << "result=" << result.x << result.y << result.value << result.a1;
+//    }
     Pos newMove(recive[0], recive[1], recive[2], recive[3]);
 
     // 简单判定，如果是必应着法直接落子
@@ -762,7 +762,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
         {
             if(inside(result) && result.value >= R_INFINTETY)
             {
-                if(depth==1)
+                if(depth<=2)
                     getPosition(result.x, result.y, hold, 3);
                 moveQueue.push_back(result);
                 powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
@@ -801,7 +801,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             runing = false;
             if(inside(result))
             {
-                if(depth==1)
+                if(depth<=2)
                     getPosition(result.x, result.y, hold, 3);
                 moveQueue.push_back(result);
                 powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);
@@ -845,7 +845,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 runing = false;
                 if(inside(result))
                 {
-                    if(depth==1)
+                    if(depth<=2)
                         getPosition(result.x, result.y, hold, 3);
                     moveQueue.push_back(result);
                     powerOperation(result.x, result.y, FLAGS_POWER_CONDESE, hold);

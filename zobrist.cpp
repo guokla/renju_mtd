@@ -54,9 +54,8 @@ bool MyThread::lookup(int depth, int alpha, int beta, int& val)
             val = H[hashInfo].val;
         }else if(H[hashInfo].flag == HASH_BETA  && H[hashInfo].val >= beta){
             val = H[hashInfo].val;
-        }else{
+        }else
             return false;
-        }
         return true;
     }
     return false;

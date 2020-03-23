@@ -33,6 +33,7 @@ private:
     int order = 0;
     int limit = 20000;
     int rangenum = 13;
+    bool topFlag = true;
     bool runing = true, openlog = false;
     QTime t1, t2;
     int count=0, ABcut=0, delta=0;  // 节点数、剪枝数
@@ -47,7 +48,7 @@ public:
 
     void setFlag(bool flag = true);
     void initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _hash, int _chess[20][20],
-                 int _vis[3][20][20], int key, int _limit, int _depth, int _algoFlag);
+                 int _vis[3][20][20], int key, int _limit, int _depth, int _algoFlag, bool _openlog);
 
     // 局面计算函数
     int valueChess(int x, int y, int key, int *piority);
