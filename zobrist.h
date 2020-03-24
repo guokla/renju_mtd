@@ -7,11 +7,10 @@
 
 struct HASHITEM{
     long long checknum;
-    int depth;
     int flag;
-    int val;
-    HASHITEM(): checknum(0), depth(-1), flag(-1), val(0) {}
-    HASHITEM(long long c, int d, int f, int v): checknum(c), depth(d), flag(f), val(v) {}
+    Pos ref;
+    HASHITEM(): checknum(0),flag(-1){}
+    HASHITEM(long long c, int d, int f, int v): checknum(c), flag(f){}
 };
 
 #endif // ZOBRIST_H

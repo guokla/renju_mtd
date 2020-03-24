@@ -32,6 +32,7 @@
 #include <functional>
 #include <QMutex>
 #include <QThread>
+#include <QList>
 
 
 #include "area.h"

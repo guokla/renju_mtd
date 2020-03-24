@@ -3,8 +3,8 @@
 
 struct Pos
 {
-    int x, y;
-    int value, a1, a2, a3;
+    int x, y;   // 着法坐标
+    int value, a1, a2, a3;  // 估值，先手权值，次序，保留
     bool operator< (const Pos &a)const{
         return value < a.value;
     }

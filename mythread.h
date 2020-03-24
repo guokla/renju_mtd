@@ -48,7 +48,8 @@ public:
 
     void setFlag(bool flag = true);
     void initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _hash, int _chess[20][20],
-                 int _vis[3][20][20], int key, int _limit, int _depth, int _algoFlag, bool _openlog);
+                    int _vis[3][20][20], int key, int _limit, int _depth,
+                    int _algoFlag, bool _openlog, int _order);
 
     // 局面计算函数
     int valueChess(int x, int y, int key, int *piority);
@@ -57,22 +58,22 @@ public:
     void powerOperation(int x, int y, int flag, int key);
 
     // PVS搜索
-    void update(QMutex& m, Pos& ret, const Pos ref, int key, int order, int val);
+    void update(QMutex& m, Pos& ret, const Pos ref);
     int deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int beta, QVector<Pos>& path);
     int killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
     // MTDF搜索
     int deepening(int origin, int& x, int& y);
     void MTD(Pos& bestmove, int origin, int f, int deep);
-    int MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
+    int MT(Pos& ret, int key, int deep, int alpha, int beta, QMap<int,int>& path);
 
     // 越界检查函数
     bool inline inside(int x, int y);
     bool inline inside(Pos move);
 
     // 哈希表操作
-    bool lookup(int depth, int alpha, int beta, int &val);
-    bool store(QMutex &m, int depth, int val, int hashf, long long hashIndex);
+    bool lookup(int depth, int alpha, int beta, Pos& ret);
+    bool store(QMutex &m, int hashf, long long hashIndex, const Pos ret);
 };
 
 #endif // MYTHREAD_H

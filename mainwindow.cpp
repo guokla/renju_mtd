@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     area = new Area(48, 67, 630, 650);
 
-    qsrand(QTime::currentTime().msec());
+    qsrand(1234567891011);
 
     for(int i = 0; i < N; i++)
         for(int j = 0; j < N; j++){
@@ -105,10 +105,14 @@ void MainWindow::drawAll(){
     for (int i = 0; i < N ; i++)
         for (int j = 0; j < N ; j++)
         {
-            if (chess[i][j] == BLACK)
+            if (!isdraw[i][j] && chess[i][j] == BLACK){
                 drawChess(i, j, QColor(0, 0, 0));
-            if (chess[i][j] == WHITE)
+                isdraw[i][j] = true;
+            }
+            if (!isdraw[i][j] && chess[i][j] == WHITE){
                 drawChess(i, j, QColor(255, 255, 255));
+                isdraw[i][j] = true;
+            }
         }
 }
 
@@ -203,7 +207,7 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
 //    }
     else{
         if(!runing){
-            depth = 1;
+            depth = 2;
             algoFlag = 1;
             t2.start();
             result.clear();
@@ -434,246 +438,13 @@ bool MainWindow::distribution(int key, int time)
     runing = true;
     MyThread *myt = new MyThread();
     myt->moveToThread(&thread);
-    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog);
+    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog, order);
     myt->connect(&thread, &QThread::finished, myt, &QObject::deleteLater); // Mythread与QThread关联
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);
     thread.start();
     emit startThread(QString::number(guess));
     return true;
-}
-
-int MainWindow::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int beta, QVector<Pos>& path)
-{
-    int i, j, val, p1, p2, k, three=0;
-    int hashf = HASH_ALPHA;
-    long long hashIndex, hashBest;
-    Pos newMove;
-    QVector<Pos> attackQueue, vec_moves;
-
-    if(t2.elapsed() > limit_kill){
-        if(runing) runing = false;
-        return alpha;
-    }
-
-    if(lookup(deep+order, alpha, beta, val, 1))
-        return val;
-
-    if (deep <= 0){
-        val = -evaluate(3-key);
-        store(mutex, 1+order, val, HASH_EXACT, hash, 1);
-        return val;
-    }
-
-    for (i = 0; i < 15; i++){
-        for (j = 0; j < 15; j++){
-            if(chess[i][j] == 0 && vis[2][i][j] > 0){
-                // 算杀的结点选择
-                // 进攻方：活三、冲四、活四、五连、防守对方的冲四
-                // 防守方：防守对方的活三、冲四，自身的冲四
-                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
-                if(origin == key){
-                    // 进攻方选点
-                    if(p1 > 0 || p2 >= 10000){
-                        attackQueue.push_back(Pos{i, j, 0, p1});
-                    }
-                }else{
-                    // 防守方选点
-                    if(p2 > 0 || p1 >= 100){
-                        attackQueue.push_back(Pos{i, j, 0, p1});
-                    }
-                }
-            }
-        }
-    }
-
-    while(!attackQueue.isEmpty()){
-
-        // 取出尾结点，并从队列中删除
-        newMove = attackQueue.last();
-        attackQueue.pop_back();
-        count++;
-
-        // 执行试探测试
-        if(newMove.a1 > 0) three++;
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_CONDESE, key);
-        k = evaluate(key);
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_RELEASE, key);
-
-        if (k <= -R_INFINTETY) continue;
-        newMove.value += k;
-
-        vec_moves.push_back(newMove);
-    }
-
-    // 如果进攻方没找到结点，情况如下：
-    // 1.局面没有进攻结点了，表明进攻失败，应该返回alpha。
-    // 2.进攻过程中遭到反击，如反活三，说明进攻不能成功，应该返回alpha。
-    // 如果防守方没找到结点，情况如下：
-    // 1.无法阻挡攻势，应该返回-INF。
-
-    // 第一层搜索无活三
-    if(origin == key && three == 0 && 1+order == ret.a1)
-        return alpha;
-    // 进攻方无棋
-    if(origin == key && vec_moves.isEmpty())
-        return alpha;
-    // 防守方无棋
-    if(origin == 3-key && vec_moves.isEmpty())
-        return -R_INFINTETY;
-
-    qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
-
-    for(auto move: vec_moves){
-
-        powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
-        path.push_back(move);
-
-        if(move == vec_moves[0]){
-            val = - deepSearch(ret, origin, EXCHANGE - key, deep - 1, -beta, -alpha, path);
-        }
-        else{
-            val = - deepSearch(ret, origin, EXCHANGE - key, deep - 1, -alpha-1, -alpha, path);
-            if(alpha < val && val < beta){
-                val = - deepSearch(ret, origin, EXCHANGE - key, deep - 1, -beta, -alpha, path);
-            }
-        }
-
-        hashIndex = hash;
-        path.pop_back();
-        powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
-
-        // 剪枝
-        if (val >= beta){
-            ABcut++;
-            if(runing) store(mutex, deep+order, beta, HASH_BETA, hashIndex, 1);
-            return beta;
-        }
-
-        if(val > alpha){
-            alpha = val;
-            hashf = HASH_EXACT;
-            hashBest = hashIndex;
-            if(1+order == ret.a1 && (val >= ret.value || ret.a2 == 0)){
-                if(openlog){
-                    qDebug("(%d,%d,%d)->(%d,%d,%d) alpha", ret.x, ret.y, ret.value, move.x, move.y, alpha);
-                    powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
-                    showChess();
-                    powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
-                }
-                ret.x = move.x;
-                ret.y = move.y;
-                ret.value = val;
-                ret.a2++;
-            }
-        }
-
-
-    }
-    store(mutex, deep+order, alpha, hashf, hashBest, 1);
-    return alpha;
-
-}
-
-int MainWindow::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path)
-{
-    int i, j, val, p1, p2, k;
-    int hashf = HASH_ALPHA;
-    long long hashIndex, hashBest;
-    Pos newMove;
-    QVector<Pos> attackQueue, vec_moves;
-
-    if(t2.elapsed() > limit){
-        if(runing) runing = false;
-        return alpha;
-    }
-
-    if(lookup(deep+order, alpha, beta, val, 1))
-        return val;
-
-    if (deep <= 0){
-        val = -evaluate(3-key);
-        store(mutex, 1+order, val, HASH_EXACT, hash, 1);
-        return val;
-    }
-
-    for (i = 0; i < 15; i++){
-        for (j = 0; j < 15; j++){
-            if(chess[i][j] == 0 && vis[2][i][j] >= 2){
-                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
-                if(p1 + p2 > 0){
-                    attackQueue.push_back(Pos{i, j, 0, p1});
-                }else{
-                    attackQueue.push_front(Pos{i, j, 0, p1});
-                }
-            }
-        }
-    }
-
-//    generate(attackQueue, key, 0); 走法产生函数会导致时延
-
-    if(attackQueue.isEmpty())
-        return alpha;
-
-    while(!attackQueue.isEmpty()){
-
-        // 取出尾结点，并从队列中删除
-        newMove = attackQueue.last();
-        attackQueue.pop_back();
-        count++;
-
-        // 执行试探测试
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_CONDESE, key);
-        k = evaluate(key);
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_RELEASE, key);
-
-        if (k <= -R_INFINTETY) continue;
-        newMove.value += k;
-        if(vec_moves.size() > rangenum)
-            vec_moves.pop_back();
-        vec_moves.push_back(newMove);
-        qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
-    }
-
-    for(auto move: vec_moves){
-
-        powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
-        path.push_back(move);
-
-        if(move == vec_moves[0]){
-            val = - killSearch(ret, EXCHANGE - key, deep - 1, -beta, -alpha, path);
-        }
-        else{
-            val = - killSearch(ret, EXCHANGE - key, deep - 1, -alpha-1, -alpha, path);
-            if(alpha < val && val < beta){
-                val = - killSearch(ret, EXCHANGE - key, deep - 1, -beta, -alpha, path);
-            }
-        }
-
-        hashIndex = hash;
-        path.pop_back();
-        powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
-
-        // 剪枝
-
-        if (val >= beta){
-            ABcut++;
-            store(mutex, deep+order, beta, HASH_BETA, hashIndex, 1);
-            return beta;
-        }
-
-        if(val > alpha){
-            alpha = val;
-            hashf = HASH_EXACT;
-            hashBest = hashIndex;
-            update(mutex, ret, move, key, 1+order, val);
-        }
-
-
-    }
-    store(mutex, deep+order, alpha, hashf, hashBest, 1);
-    return alpha;
-
 }
 
 int MainWindow::checkWinner(int x, int y, bool endFlag){
@@ -716,10 +487,10 @@ void MainWindow::dealSignal(const QString &str)
     thread.wait();
     for(i = 0; i < j; i++)
         recive[i]=str.section(',', i+1, i+1).toLong();
-//    if(openlog){
-//        qDebug() << str;
-//        qDebug() << "result=" << result.x << result.y << result.value << result.a1;
-//    }
+    if(openlog){
+        qDebug() << str;
+        qDebug() << "result=" << result.x << result.y << result.value << result.a1;
+    }
     Pos newMove(recive[0], recive[1], recive[2], recive[3]);
 
     // 简单判定，如果是必应着法直接落子
@@ -775,7 +546,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 buffer += temp;
                 return;
             }else{
-                depth = 1;
+                depth = 2;
                 algoFlag = lock_algo;
                 result.clear();
                 t2.start();
@@ -871,180 +642,6 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 }
             }
     }
-}
-
-int MainWindow::deepening(int origin, int& x, int& y){
-    int firstGuess = 0;
-    Pos bestmove, newMove;
-    t2.start();
-    runing = true;
-    count = ABcut = tag = sto = ref = delta = 0;
-    for(int d = 2; runing && d < 15;d+=2){
-        mtdf(newMove, origin, firstGuess, d);
-        QString temp;
-        if(runing && inside(newMove)){
-            bestmove = newMove;
-            temp.sprintf("[MTD: 深度%2d, %2d,%2d]: val =%3d, time = %.3fs\n",d, bestmove.x, bestmove.y, bestmove.value, t2.elapsed()/1000.0);
-            buffer+=temp;
-        }
-        newMove.a2 = 0;
-        firstGuess = bestmove.value;
-        x = bestmove.x;
-        y = bestmove.y;
-        if(openlog){
-            powerOperation(bestmove.x, bestmove.y, FLAGS_POWER_CONDESE, hold);
-            showChess();
-            powerOperation(bestmove.x, bestmove.y, FLAGS_POWER_RELEASE, hold);
-        }
-        if(firstGuess >= R_INFINTETY || bestmove.a2 >= 10000) break;
-    }
-    qDebug("");
-    return firstGuess;
-}
-
-void MainWindow::mtdf(Pos& bestmove, int origin, int f, int deep)
-{
-    int alpha, beta, best_value, test, speed[2]={0,0};
-    Pos newMove = Pos(20, 20, 0, order+1, 0), killer;
-    QVector<Pos> path;
-
-
-    alpha = -2*R_INFINTETY;
-    beta  = +2*R_INFINTETY;
-    test  = f;
-
-    // 结合二分查找和探测查找
-    do{
-        best_value = alpha_beta(newMove, origin, deep, test-1, test, path, killer);
-        if(best_value < test){
-            // alpha结点，找自己最差的结点
-            beta = best_value;
-            speed[0]++; speed[1]=0;
-            if(speed[0] > 1)
-                test = (alpha+beta)>>1;
-            else
-                test = best_value;
-        }else{
-            // beta结点，找自己最好的结点
-            alpha = best_value;
-            bestmove = newMove;
-            speed[1]++; speed[0]=0;
-            if(speed[1] > 1)
-                test = 1+(alpha+beta)>>1;
-            else
-                test = best_value+1;
-        }
-//        qDebug("<%d,%d>", alpha, beta);
-    }while(alpha < beta);
-//    newMove.value = (alpha+beta)>>1;
-    valueChess(bestmove.x, bestmove.y, 3-origin, &bestmove.a2);
-}
-
-int MainWindow::alpha_beta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path, Pos& killer)
-{
-    int i, j, val, p1, p2;
-    int hashf = HASH_ALPHA;
-    long long hashIndex;
-    Pos newMove;
-
-    QVector<Pos> attackQueue, vec_moves;
-
-    if(t2.elapsed() > limit){
-        if(runing) runing = false;
-        return alpha;
-    }
-
-    // 查找哈希表
-    if(lookup(deep+order, alpha, beta, val, 1)){
-        return val;
-    }
-
-    if(deep <= 0){
-        val = -evaluate(3-key);
-        store(mutex, 1+order, val, HASH_EXACT, hash, 1);
-        return val;
-    }
-
-    // 生成合适着法
-
-    for (i = 0; i < 15; i++){
-        for (j = 0; j < 15; j++){
-            if (chess[i][j] == 0 && vis[2][i][j] >= 2){
-                valueChess(i, j, key, &p1);
-                valueChess(i, j, 3-key, &p2);
-                if(p1 + p2 > 0)
-                    attackQueue.push_back(Pos(i, j, 0, p1));
-                else
-                    attackQueue.push_front(Pos(i, j, 0, p1));
-            }
-        }
-    }
-
-    while(!attackQueue.isEmpty()){
-
-        // 取出尾结点，并从队列中删除
-        newMove = attackQueue.last();
-        attackQueue.pop_back();
-        count++;
-
-        // 执行试探测试
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_CONDESE, key);
-        if(!lookup(deep+order, alpha, beta, newMove.value, 1)){
-            newMove.value = evaluate(key);
-        }
-
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_RELEASE, key);
-
-        if (newMove.value <= -0.1*R_INFINTETY)
-            continue;
-
-        vec_moves.push_back(newMove);
-    }
-    qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
-
-    // 遍历搜索树
-    for(auto k: vec_moves){
-
-        // 执行试探测试
-        path.push_back(k);
-        powerOperation(k.x, k.y, FLAGS_POWER_CONDESE, key);
-
-        hashIndex = hash;
-
-        val = - alpha_beta(ret, 3-key, deep-1, -beta, -alpha, path, killer);
-
-        powerOperation(k.x, k.y, FLAGS_POWER_RELEASE, key);
-        path.pop_back();
-
-        // 剪枝
-
-        if (val >= beta){
-            ABcut++;
-            store(mutex, deep+order, beta, HASH_BETA, hashIndex, 1);
-            if(1+order == ret.a1 && (beta >= ret.value || ret.a2 == 0)){
-                ret.x = k.x;
-                ret.y = k.y;
-                ret.value = beta;
-                ret.a2++;
-            }
-            return beta;
-        }
-
-        if(val > alpha){
-            alpha = val;
-            hashf = HASH_EXACT;
-            if(1+order == ret.a1 && (val >= ret.value || ret.a2 == 0)){
-                ret.x = k.x;
-                ret.y = k.y;
-                ret.value = val;
-                ret.a2++;
-            }
-        }
-
-    }
-
-    store(mutex, deep+order, alpha, hashf, hashIndex, 1);
-    return alpha;
 }
 
 void MainWindow::update(QMutex& m, Pos& ret, const Pos ref, int key, int order, int val){
