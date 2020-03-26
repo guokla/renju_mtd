@@ -25,8 +25,9 @@ bool MyThread::lookup(int depth, int alpha, int beta, Pos& ret)
 bool MyThread::store(QMutex &m, int hashf, long long hashIndex, const Pos ret)
 {
     long long hashInfo;
+    if(hashIndex == 0) return false;
 
-    m.lock();
+    QMutexLocker locker(&m);
     hashInfo = hashIndex & (HASH_TABLE_SIZE - 1);
 
     if(H[hashInfo].ref.a2 < ret.a2 || H[hashInfo].flag > 2 || H[hashInfo].flag < 0){
@@ -35,7 +36,6 @@ bool MyThread::store(QMutex &m, int hashf, long long hashIndex, const Pos ret)
         H[hashInfo].flag = hashf;
         H[hashInfo].ref   = ret;
     }
-    m.unlock();
     return true;
 }
 

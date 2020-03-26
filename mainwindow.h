@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <functional>
 #include <QMutex>
+#include <QMutexLocker>
 #include <QThread>
 #include <QList>
 
@@ -46,7 +47,7 @@
 #define EXCHANGE 3              // 交替参数宏
 #define ADVANTAGE 4             // 棋风参数宏
 
-#define R_INFINTETY  200
+#define R_INFINTETY  1000
 
 const long long HASH_TABLE_SIZE = 1 << 20;    // 哈希表大小
 

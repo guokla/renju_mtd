@@ -542,7 +542,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 runing = false;
                 result.clear();
                 QString temp;
-                temp.sprintf("[kill: 搜索结束, time: %.3f s\n\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
+                temp.sprintf("[kill: 搜索结束\n\n", depth, newMove.x, newMove.y);
                 buffer += temp;
                 return;
             }else{
@@ -592,7 +592,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                     checkWinner(result.x, result.y, true);
                     hold = EXCHANGE - hold;
                     QString temp;
-                    temp.sprintf("[PVS: 结束,%2d,%2d], time: %.3f s\n\n", result.x, result.y, t2.elapsed()/1000.0);
+                    temp.sprintf("[PVS: 结束,%2d,%2d]\n\n", result.x, result.y);
                     buffer += temp;
                 }
             }
@@ -636,7 +636,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                         checkWinner(result.x, result.y, true);
                         hold = EXCHANGE - hold;
                         QString temp;
-                        temp.sprintf("[MTD: 结束,%2d,%2d], time: %.3f s\n\n", result.x, result.y, t2.elapsed()/1000.0);
+                        temp.sprintf("[MTD: 结束,%2d,%2d]\n\n", result.x, result.y);
                         buffer += temp;
                     }
                 }

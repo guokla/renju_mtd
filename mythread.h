@@ -23,6 +23,7 @@ private:
     volatile bool isStop;
     HASHITEM *H;                    // 哈希表
     QMutex mutex;
+    QMap<int,int> history;
     unsigned long Z[20][20][3];     // 评分置换表
     long long hash = 0;             // 哈希值
     int chess[20][20];              // 棋盘数组
@@ -30,7 +31,7 @@ private:
     char strTab[3];                 // 字符映射表
     int Kernel = 2;                 // 能量分布算子大小
     int hold = 0;
-    int order = 0;
+    int order = 0, init_order=0;
     int limit = 20000;
     int rangenum = 13;
     bool topFlag = true;
@@ -65,7 +66,8 @@ public:
     // MTDF搜索
     int deepening(int origin, int& x, int& y);
     void MTD(Pos& bestmove, int origin, int f, int deep);
-    int MT(Pos& ret, int key, int deep, int alpha, int beta, QMap<int,int>& path);
+    int MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
+    int alphabeta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
     // 越界检查函数
     bool inline inside(int x, int y);
