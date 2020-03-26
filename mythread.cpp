@@ -420,25 +420,11 @@ void MyThread::MTD(Pos& bestmove, int origin, int f, int deep)
     int alpha, beta, best_value, test, speed[2]={0, 0};
     Pos newMove = Pos(20, 20, 0, 0, order+1);
     QVector<Pos> path;
+
     test  = f;
-
-//    best_value = MT(newMove, origin, deep, test-1, test, path);
-//    bestmove = newMove;
-//    if(best_value > test){
-//        do{
-//            test  = best_value;
-//            best_value = MT(newMove, origin, deep, test-1, test, path);
-//        }while(best_value > test && best_value <= R_INFINTETY);
-//    }else{
-//        do{
-//            test  = best_value-1;
-//            best_value = MT(newMove, origin, deep, test-1, test, path);
-//            bestmove = newMove;
-//        }while(best_value <= test && best_value >= -R_INFINTETY);
-//    }
-
     alpha = -R_INFINTETY;
     beta  = +R_INFINTETY;
+
     do{
         best_value = MT(newMove, origin, deep, test-1, test, path);
         if(best_value < test){
