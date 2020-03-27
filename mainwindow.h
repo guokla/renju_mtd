@@ -92,7 +92,7 @@ public:
 
 private:
     Ui::MainWindow *ui;                         // ui指针
-    QThread thread, thread2;                    // 线程
+    QThread thread;                             // 线程
     QQueue<Pos> moveQueue;                      // 走法记录
     Pos result;                                 // 接收返回结果
     int centraTimer;                            // 刷新屏幕等待时间
@@ -114,7 +114,7 @@ private:
     int order=0;                                // 棋子手顺和最新记录
     int rx[N*N], ry[N*N];                       // 棋子手顺位置
     int rangenum = 15, r=0,c=0;                 // 搜索存储节点数
-    int count=0, ABcut=0, delta=0;              // 节点数、剪枝数
+    int count=0, ABcut=0;                       // 节点数、剪枝数
     int tag=0,sto=0,ref=0;                      // 命中数、存储数、冲突数
     QTime t, t2;                                // 计时器
     int depth = 1;
@@ -131,6 +131,8 @@ private:
     QPainter centerpainter;                     // 中心绘图设备，与双缓冲绘图匹配
     QString buffer;                             // 屏幕信息
 
+    const int delta = 2;
+    const int init_depth = 2;
     const int vx[8] = { 0, 1, 1, 1, 0,-1,-1,-1};
     const int vy[8] = {-1,-1, 0, 1, 1, 1, 0,-1};
 

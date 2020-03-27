@@ -15,9 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     memset(valTab, 0, sizeof(valTab));
     memset(priorTab, 0, sizeof(priorTab));
     memset(isdraw, false, sizeof(isdraw));
-    H[0] = new HASHITEM[HASH_TABLE_SIZE]();
-    H[1] = new HASHITEM[HASH_TABLE_SIZE]();
-    H[2] = new HASHITEM[HASH_TABLE_SIZE]();
+//    H[0] = new HASHITEM[HASH_TABLE_SIZE]();
+//    H[1] = new HASHITEM[HASH_TABLE_SIZE]();
+//    H[2] = new HASHITEM[HASH_TABLE_SIZE]();
 
     strTab[0] = ' ';
     strTab[1] = 'M';
@@ -207,7 +207,7 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
 //    }
     else{
         if(!runing){
-            depth = 2;
+            depth = init_depth;
             algoFlag = 1;
             t2.start();
             result.clear();
@@ -525,12 +525,15 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             temp.sprintf("[kill: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
             if(newMove.value < R_INFINTETY){
-                depth += 2;
+                depth += delta;
                 distribution(hold, limit_kill - t2.elapsed());
             }
         }
         if(judge == 0 || !inside(newMove) || newMove.value >= R_INFINTETY)
         {
+            QString temp;
+            temp.sprintf("[kill: 搜索结束]\n\n");
+            buffer += temp;
             if(inside(result) && result.value >= R_INFINTETY)
             {
                 if(depth<=2)
@@ -541,12 +544,9 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 hold = EXCHANGE - hold;
                 runing = false;
                 result.clear();
-                QString temp;
-                temp.sprintf("[kill: 搜索结束\n\n", depth, newMove.x, newMove.y);
-                buffer += temp;
                 return;
             }else{
-                depth = 2;
+                depth = init_depth;
                 algoFlag = lock_algo;
                 result.clear();
                 t2.start();
@@ -563,7 +563,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             temp.sprintf("[PVS: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
             if(newMove.value < R_INFINTETY){
-                depth += 2;
+                depth += delta;
                 distribution(hold, limit - t2.elapsed());
             }
         }
@@ -607,7 +607,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 buffer += temp;
                 guess = newMove.value;
                 if(newMove.value < R_INFINTETY){
-                    depth += 2;
+                    depth += delta;
                     distribution(hold, limit - t2.elapsed());
                 }
             }
@@ -668,8 +668,11 @@ void MainWindow::on_radioButton_clicked()
         lock_algo = 0;
         ui->radioButton_2->clearFocus();
         ui->statusBar->showMessage(tr("采用PVS算法"), 0);
-    }else
+    }else{
         ui->statusBar->showMessage(tr("运算中"), 0);
+        if(lock_algo == 0) ui->radioButton_2->clearFocus();
+        if(lock_algo == 2) ui->radioButton->clearFocus();
+    }
 }
 
 void MainWindow::on_radioButton_2_clicked()
@@ -679,8 +682,11 @@ void MainWindow::on_radioButton_2_clicked()
         lock_algo = 2;
         ui->radioButton->clearFocus();
         ui->statusBar->showMessage(tr("采用MTD-f算法"), 0);
-    }else
+    }else{
         ui->statusBar->showMessage(tr("运算中"), 0);
+        if(lock_algo == 0) ui->radioButton_2->clearFocus();
+        if(lock_algo == 2) ui->radioButton->clearFocus();
+    }
 }
 
 void MainWindow::on_radioButton_9_clicked()

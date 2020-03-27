@@ -12,6 +12,7 @@ class MyThread : public QObject
 
 public:
     explicit MyThread(QObject *parent = nullptr);
+    ~MyThread();
 
 signals:
     void resultReady(const QString &str);
@@ -75,7 +76,7 @@ public:
 
     // 哈希表操作
     bool lookup(int depth, int alpha, int beta, Pos& ret);
-    bool store(QMutex &m, int hashf, long long hashIndex, const Pos ret);
+    bool store(QMutex &m, int hashf, long long hashIndex, const Pos ret, int deep);
 };
 
 #endif // MYTHREAD_H

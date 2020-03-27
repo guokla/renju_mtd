@@ -10,7 +10,6 @@ struct HASHITEM{
     int flag;
     Pos ref;
     HASHITEM(): checknum(0),flag(-1){}
-    HASHITEM(long long c, int d, int f, int v): checknum(c), flag(f){}
 };
 
 #endif // ZOBRIST_H
