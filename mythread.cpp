@@ -181,7 +181,7 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
     if (jump+three >= 2)
         score = Max(score, 50);
 
-    score += (2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 3*three + four);
+    score += (2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 3*three + 4*four);
     score += 5/(1+abs(x-7)+abs(y-7));
 
     *piority = jump + 2*three + 100*four + 10000*five;
@@ -331,6 +331,8 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         return alpha;
     }
 
+    if(path.last().a1 >= 10000) return -R_INFINTETY;
+
     if(lookup(deep, alpha, beta, newMove)){
         update(mutex, ret, newMove);
         return newMove.value;
@@ -340,29 +342,41 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         for (j = 0; j < 15; j++){
             if(chess[i][j] == 0 && ((topFlag && vis[2][i][j] >= 2) || (!topFlag && vis[1][i][j] >= 1))){
                 k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
-                if(p1 + p2 > 0){
-                    attackQueue.push_back(Pos{i, j, k, p1, depth-deep});
-                }else{
-                    attackQueue.push_front(Pos{i, j, k, p1, depth-deep});
-                }
+                attackQueue.push_back(Pos{i, j, k, p1, depth-deep, Max(p1, p2)});
             }
         }
     }
 
-    while(!attackQueue.isEmpty()){
+    qSort(attackQueue.begin(), attackQueue.end(), [](const Pos a, const Pos b){return a.a3>b.a3;});
 
-        // 取出尾结点，并从队列中删除
-        newMove = attackQueue.last();
-        attackQueue.pop_back();
-        count++;
+    if(attackQueue[0].a3 >= 10000){
+        attackQueue[0].value = R_INFINTETY;
+        vec_moves.push_front(attackQueue[0]);
+    }else if(attackQueue[0].a3 >= 200){
+        for(i = 0; i < attackQueue.size(); i++){
+            if(attackQueue[i].a3 >= 200)
+                vec_moves.push_front(attackQueue[i]);
+            else break;
+        }
+        // 找双方的冲四点
+        for(i = vec_moves.size(); i < attackQueue.size(); i++){
+            valueChess(attackQueue[i].x, attackQueue[i].y, key, &p1);
+            valueChess(attackQueue[i].x, attackQueue[i].y, 3-key, &p2);
+            if(p1+p2 >= 100)
+                vec_moves.push_front(attackQueue[i]);
+            else break;
+        }
+    }else{
+        for(Pos temp: attackQueue){
+            if(vec_moves.size() > rangenum) break;
+            count++;
+            powerOperation(temp.x, temp.y, FLAGS_POWER_CONDESE, key);
+            temp.value = evaluate(key);
+            powerOperation(temp.x, temp.y, FLAGS_POWER_RELEASE, key);
 
-        // 执行试探测试
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_CONDESE, key);
-        newMove.value = evaluate(key);
-        powerOperation(newMove.x, newMove.y, FLAGS_POWER_RELEASE, key);
-
-        if (newMove.value <= -0.5*R_INFINTETY) continue;
-        vec_moves.push_back(newMove);
+            if (temp.value <= -0.5*R_INFINTETY) continue;
+            vec_moves.push_back(temp);
+        }
     }
 
     if(vec_moves.isEmpty())
@@ -462,6 +476,8 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
         return alpha;
     }
 
+    if(path.last().a1 >= 10000) return -R_INFINTETY;
+
     // 查找哈希表
     if(lookup(deep, alpha, beta, newMove)){
         update(mutex, ret, newMove);
@@ -473,28 +489,47 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
         for (j = 0; j < 15; j++){
             if (chess[i][j] == 0 && ((topFlag && vis[2][i][j] >= 1) || (!topFlag && vis[1][i][j] >= 1))){
                 k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
-                if(p1 + p2 > 0)
-                    attackQueue.push_back(Pos(i, j, k, p1, depth-deep));
-                else
-                    attackQueue.push_front(Pos(i, j, k, p1, depth-deep));
+                attackQueue.push_back(Pos(i, j, k, p1, depth-deep, Max(p1, p2)));
             }
         }
     }
 
-    for(Pos& move: attackQueue){
+    qSort(attackQueue.begin(), attackQueue.end(), [](const Pos &a, const Pos &b){return a.a3 >b.a3;});
 
-        count++;
-        powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
-        move.value = evaluate(key);
-        powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
+    if(attackQueue[0].a3 >= 10000){
+        attackQueue[0].value = R_INFINTETY;
+        vec_moves.push_back(attackQueue[0]);
+    }else if(attackQueue[0].a3 >= 200){
+        for(i = 0; i < attackQueue.size(); i++){
+            if(attackQueue[i].a3 >= 200){
+                vec_moves.push_back(attackQueue[i]);
+            }else break;
+        }
+        // 找双方的冲四点
+        for(i = vec_moves.size(); i < attackQueue.size(); i++){
+            valueChess(attackQueue[i].x, attackQueue[i].y, key, &p1);
+            valueChess(attackQueue[i].x, attackQueue[i].y, 3-key, &p2);
+            if(p1+p2 >= 100)
+                vec_moves.push_back(attackQueue[i]);
+            else break;
+        }
+    }else{
+        for(Pos& move: attackQueue){
+            if(vec_moves.size() > rangenum) break;
+            count++;
+            powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
+            move.value = evaluate(key);
+            powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
 
-        if (move.value <= -0.5*R_INFINTETY)
-            continue;
+            if (move.value <= -0.5*R_INFINTETY)
+                continue;
 
-        vec_moves.push_back(move);
+            vec_moves.push_back(move);
+        }
     }
 
-    qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
+
+    qSort(vec_moves.begin(), vec_moves.end(), [](const Pos &a, const Pos &b){return a.value >b.value;});
 
     // 遍历搜索树
     if(topFlag) topFlag = false;
@@ -532,88 +567,8 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
     return cur;
 }
 
-int MyThread::alphabeta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path)
+void MyThread::update(QMutex& m, Pos& ret, const Pos ref)
 {
-    int i, j, p1, p2, k;
-    int hashf = HASH_ALPHA;
-    long long hashIndex=0, hashBest=0;
-    Pos newMove, bestMove;
-    QVector<Pos> vec_moves;
-
-    if(t2.elapsed() > limit){
-        if(runing) runing = false;
-        return alpha;
-    }
-
-    // 查找哈希表
-    if(lookup(deep+order, alpha, beta, newMove)){
-        update(mutex, ret, newMove);
-        return newMove.value;
-    }
-
-    // 生成合适着法
-    for (i = 0; i < 15; i++){
-        for (j = 0; j < 15; j++){
-            if (chess[i][j] == 0 && ((topFlag && vis[2][i][j] >= 1) || (!topFlag && vis[1][i][j] >= 1))){
-                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
-                if(p1 + p2 > 0)
-                    vec_moves.push_back(Pos(i, j, k, p1, 1+order));
-                else
-                    vec_moves.push_front(Pos(i, j, k, p1, 1+order));
-            }
-        }
-    }
-
-    for(int i = 0; i < vec_moves.size();){
-
-        count++;
-        powerOperation(vec_moves[i].x, vec_moves[i].y, FLAGS_POWER_CONDESE, key);
-        vec_moves[i].value = evaluate(key);
-        powerOperation(vec_moves[i].x, vec_moves[i].y, FLAGS_POWER_RELEASE, key);
-
-        if (vec_moves[i].value <= -0.5*R_INFINTETY)
-            vec_moves.removeAt(i);
-        else{
-            i++;
-        }
-    }
-
-    qSort(vec_moves.begin(), vec_moves.end(), greater<Pos>());
-
-    // 遍历搜索树
-    if(topFlag) topFlag = false;
-    for(Pos& move: vec_moves){
-
-        hashIndex = hash;
-        powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
-
-        if(deep > 1)
-            move.value = - alphabeta(ret, 3-key, deep-1, -beta, -alpha, path);
-        else{
-            move.value = evaluate(key);
-//            store(mutex, HASH_EXACT, hash, move);
-        }
-
-        powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
-
-        if(move.value >= beta){
-            ABcut++;
-            return beta;
-        }
-
-        if(move.value > alpha){
-            alpha = move.value;
-            hashf = HASH_EXACT;
-            hashBest = hashIndex;
-            bestMove = move;
-            update(mutex, ret, move);
-        }
-    }
-//    if(runing) store(mutex, hashf, hashBest, bestMove);
-    return alpha;
-}
-
-void MyThread::update(QMutex& m, Pos& ret, const Pos ref){
     QMutexLocker locker(&m);
     if(ref.a2 == ret.a2 && (ref.value > ret.value || ret.a3 == 0)){
         if(openlog) qDebug("(%d,%d,%d)->(%d,%d,%d) alpha", ret.x, ret.y, ret.value, ref.x, ref.y, ref.value);

@@ -34,7 +34,7 @@ private:
     int hold = 0;
     int order = 0, init_order=0;
     int limit = 20000;
-    int rangenum = 13;
+    int rangenum = 30;
     bool topFlag = true;
     bool runing = true, openlog = false;
     QTime t1, t2;
