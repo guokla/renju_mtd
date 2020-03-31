@@ -395,12 +395,7 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
     if (jump+three >= 2)
         score = Max(score, 50);
 
-<<<<<<< HEAD
     score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
-=======
-    score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three);
-    score += 5/(1+abs(x-7)+abs(y-7));
->>>>>>> aac07a3ed3c2424844a906d68368d89b82712647
 
     *piority = jump + 2*three + 100*four + 10000*five;
 
