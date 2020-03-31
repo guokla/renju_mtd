@@ -305,7 +305,9 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
             if     (b[i] >= 2 && b[i+4] >= 1 && b[i] + b[i+4] >= 3 && bp[i+4] == 0)   { three++;}   // 活三
             else if(b[i] >= 1 && b[i+4] >= 2 && b[i] + b[i+4] >= 3 && bp[i]   == 0)   { three++;}   // 活三
             // OOO++ // +OOO+
-            if(b[i] + b[i+4] == 2 )           { sleep_three++;}    // 眠三
+            if(b[i] == 1 && b[i+4] == 1)           { sleep_three++;}    // 眠三
+            else if(b[i] == 0 && b[i+4] >= 2)           { sleep_three++;}    // 眠三
+            else if(b[i+4] == 0 && b[i] >= 2)           { sleep_three++;}    // 眠三
         }
 
         if(p[i] + p[i+4] == 1){
@@ -324,7 +326,9 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
             else if(b[i+4] == 2 && bp[i+4] >= 1 )                   { sleep_jump++;}
             // +++OO++ && ++OO+++
             if (b[i] >= 1 && b[i+4] >= 1 && b[i] + b[i+4] >= 5)  { two++; }       // 活二
-            if (b[i] + b[i+4] <= 1 && b[i] + b[i+4] >= 5)  { sleep_two++; }       // 眠二
+            else if (b[i] + b[i+4] <= 5)  { sleep_two++; }       // 眠二
+            else if (b[i] == 0 && b[i+4] >= 5)  { sleep_two++; }       // 眠二
+            else if (b[i+4] == 0 && b[i] >= 5)  { sleep_two++; }       // 眠二
 
         }
 
@@ -356,26 +360,24 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
         }
     }
 
-    score = 0;
-
     if (five >= 1)
-        score = Max(score, 100);
+        score = Max(score, 200);
 
     if (four >= 2)
-        score = Max(score, 50);
+        score = Max(score,  120);
 
     if (four >= 1 && jump+three >= 1)
-        score = Max(score, 40);
+        score = Max(score, 80);
 
     if (jump+three >= 2)
-        score = Max(score, 30);
+        score = Max(score, 50);
 
-    score = Max(score, sleep_three + sleep_jump + 2*jump + 2*two + 2*three);
-    score = Max(score, 3/(1+abs(x-7)+abs(y-7)));
+    score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
 
     *piority = jump + 2*three + 100*four + 10000*five;
 
     return score;
+
 }
 
 int MainWindow::evaluate(int key)

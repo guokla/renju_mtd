@@ -116,7 +116,9 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
             if     (b[i] >= 2 && b[i+4] >= 1 && b[i] + b[i+4] >= 3 && bp[i+4] == 0)   { three++;}   // 活三
             else if(b[i] >= 1 && b[i+4] >= 2 && b[i] + b[i+4] >= 3 && bp[i]   == 0)   { three++;}   // 活三
             // OOO++ // +OOO+
-            if(b[i] + b[i+4] == 2 )           { sleep_three++;}    // 眠三
+            if(b[i] == 1 && b[i+4] == 1)           { sleep_three++;}    // 眠三
+            else if(b[i] == 0 && b[i+4] >= 2)           { sleep_three++;}    // 眠三
+            else if(b[i+4] == 0 && b[i] >= 2)           { sleep_three++;}    // 眠三
         }
 
         if(p[i] + p[i+4] == 1){
@@ -135,7 +137,9 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
             else if(b[i+4] == 2 && bp[i+4] >= 1 )                   { sleep_jump++;}
             // +++OO++ && ++OO+++
             if (b[i] >= 1 && b[i+4] >= 1 && b[i] + b[i+4] >= 5)  { two++; }       // 活二
-            if (b[i] + b[i+4] <= 1 && b[i] + b[i+4] >= 5)  { sleep_two++; }       // 眠二
+            else if (b[i] + b[i+4] <= 5)  { sleep_two++; }       // 眠二
+            else if (b[i] == 0 && b[i+4] >= 5)  { sleep_two++; }       // 眠二
+            else if (b[i+4] == 0 && b[i] >= 5)  { sleep_two++; }       // 眠二
 
         }
 
@@ -181,8 +185,7 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
     if (jump+three >= 2)
         score = Max(score, 50);
 
-    score += (2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 3*three + 4*four);
-    score += 5/(1+abs(x-7)+abs(y-7));
+    score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
 
     *piority = jump + 2*three + 100*four + 10000*five;
 
@@ -221,11 +224,11 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
 
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if(chess[i][j] == 0 && ((topFlag && vis[2][i][j] >= 2) || (!topFlag && vis[1][i][j] >= 1))){
+            if(chess[i][j] == 0 && vis[2][i][j] >= 2){
                 // 算杀的结点选择
                 // 进攻方：活三、冲四、活四、五连、防守对方的冲四
                 // 防守方：防守对方的活三、冲四，自身的冲四
-                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
+                k = 2*valueChess(i, j, key, &p1) + valueChess(i, j, 3-key, &p2);
                 if(origin == key){
                     // 进攻方选点
                     if(p1 > 0 || p2 >= 10000){
@@ -340,8 +343,8 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
 
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if(chess[i][j] == 0 && ((topFlag && vis[2][i][j] >= 2) || (!topFlag && vis[1][i][j] >= 1))){
-                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
+            if(chess[i][j] == 0 && vis[2][i][j] >= 2){
+                k = 2*valueChess(i, j, key, &p1) + valueChess(i, j, 3-key, &p2);
                 attackQueue.push_back(Pos{i, j, k, p1, depth-deep, Max(p1, p2)});
             }
         }
@@ -487,8 +490,8 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
     // 生成合适着法
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if (chess[i][j] == 0 && ((topFlag && vis[2][i][j] >= 1) || (!topFlag && vis[1][i][j] >= 1))){
-                k = 0.2*valueChess(i, j, key, &p1) + 0.1*valueChess(i, j, 3-key, &p2);
+            if (chess[i][j] == 0 && vis[2][i][j] >= 2){
+                k = 2*valueChess(i, j, key, &p1) + valueChess(i, j, 3-key, &p2);
                 attackQueue.push_back(Pos(i, j, k, p1, depth-deep, Max(p1, p2)));
             }
         }
@@ -625,7 +628,7 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
         order++;
         hash ^= Z[x][y][k];
         chess[x][y] = key;
-        for(auto dis = 1; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
+        for(auto dis = 2; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
                 dx = x+vx[i]*j;
                 dy = y+vy[i]*j;
@@ -639,7 +642,7 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
         order--;
         hash ^= Z[x][y][k];
         chess[x][y] = 0;
-        for(auto dis = 1; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
+        for(auto dis = 2; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
                 dx = x+vx[i]*j;
                 dy = y+vy[i]*j;
