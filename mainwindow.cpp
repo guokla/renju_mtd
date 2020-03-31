@@ -70,7 +70,7 @@ void MainWindow::mousePressEvent(QMouseEvent *e){
             powerOperation(px, py, FLAGS_POWER_CONDESE, hold);
 
             checkWinner(px, py, true);
-//            showChess();
+            showChess();
 
             hold = EXCHANGE - hold;
             ui->statusBar->showMessage(tr("(%1, %2, %3)").arg(px).arg(py).arg(evaluate(3-hold)), 5000);
@@ -214,11 +214,11 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
 
 void MainWindow::powerOperation(int x, int y, int flag, int key)
 {
-    int i, j, k = key, dx, dy;
+    int i, j, k, dx, dy, p;
 
     if (flag == FLAGS_POWER_CONDESE){
         order++;
-        hash ^= Z[x][y][k];
+        hash ^= Z[x][y][key];
         chess[x][y] = key;
         for(auto dis = 1; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
@@ -229,10 +229,22 @@ void MainWindow::powerOperation(int x, int y, int flag, int key)
                 }
             }
         }
+        // 更新权值
+        valTab[x][y][key] = valueChess(x, y, key, &p);
+        priorTab[x][y][key] = p;
+        for(i=0, j=1; i<8; i++, j=1){
+            dx=x+vx[i];dy=y+vy[i];
+            for(;j<=4 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
+                if(chess[dx][dy] > 0){
+                    valTab[dx][dy][chess[dx][dy]] = valueChess(dx, dy, chess[dx][dy], &p);
+                    priorTab[dx][dy][chess[dx][dy]] = p;
+                }
+            }
+        }
     }
     else{
         order--;
-        hash ^= Z[x][y][k];
+        hash ^= Z[x][y][key];
         chess[x][y] = 0;
         for(auto dis = 1; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
@@ -240,6 +252,17 @@ void MainWindow::powerOperation(int x, int y, int flag, int key)
                 dy = y+vy[i]*j;
                 if(inside(dx, dy)){
                     vis[dis][dx][dy]--;
+                }
+            }
+        }
+        valTab[x][y][key] = 0;
+        priorTab[x][y][key] = 0;
+        for(i=0, j=1; i<8; i++, j=1){
+            dx=x+vx[i];dy=y+vy[i];
+            for(;j<=4 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
+                if(chess[dx][dy] > 0){
+                    valTab[dx][dy][chess[dx][dy]] = valueChess(dx, dy, chess[dx][dy], &p);
+                    priorTab[dx][dy][chess[dx][dy]] = p;
                 }
             }
         }
@@ -372,7 +395,12 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
     if (jump+three >= 2)
         score = Max(score, 50);
 
+<<<<<<< HEAD
     score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
+=======
+    score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three);
+    score += 5/(1+abs(x-7)+abs(y-7));
+>>>>>>> aac07a3ed3c2424844a906d68368d89b82712647
 
     *piority = jump + 2*three + 100*four + 10000*five;
 
@@ -422,11 +450,17 @@ void MainWindow::showChess()
 {
     if(!openlog) return;
     for (int i = 0; i < 15; i++)
-       qDebug("%2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c\n",
-              strTab[chess[0][i]], strTab[chess[1][i]], strTab[chess[2][i]], strTab[chess[3][i]], strTab[chess[4][i]],
-              strTab[chess[5][i]], strTab[chess[6][i]], strTab[chess[7][i]], strTab[chess[8][i]], strTab[chess[9][i]],
-              strTab[chess[10][i]], strTab[chess[11][i]], strTab[chess[12][i]], strTab[chess[13][i]], strTab[chess[14][i]]);
-    qDebug();
+       qDebug("%2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d",
+              valTab[0][i][hold] , valTab[1][i][hold] , valTab[2][i][hold] , valTab[3][i][hold] , valTab[4][i][hold] ,
+              valTab[5][i][hold] , valTab[6][i][hold] , valTab[7][i][hold] , valTab[8][i][hold] , valTab[9][i][hold] ,
+              valTab[10][i][hold], valTab[11][i][hold], valTab[12][i][hold], valTab[13][i][hold], valTab[14][i][hold]);
+
+//    for (int i = 0; i < 15; i++)
+//       qDebug("%2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c %2c\n",
+//              strTab[chess[0][i]], strTab[chess[1][i]], strTab[chess[2][i]], strTab[chess[3][i]], strTab[chess[4][i]],
+//              strTab[chess[5][i]], strTab[chess[6][i]], strTab[chess[7][i]], strTab[chess[8][i]], strTab[chess[9][i]],
+//              strTab[chess[10][i]], strTab[chess[11][i]], strTab[chess[12][i]], strTab[chess[13][i]], strTab[chess[14][i]]);
+    qDebug("\n");
 }
 
 bool MainWindow::distribution(int key, int time)
@@ -434,7 +468,7 @@ bool MainWindow::distribution(int key, int time)
     runing = true;
     MyThread *myt = new MyThread();
     myt->moveToThread(&thread);
-    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog, order);
+    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog, order, valTab, priorTab);
     myt->connect(&thread, &QThread::finished, myt, &QObject::deleteLater); // Mythread与QThread关联
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);

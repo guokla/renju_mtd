@@ -8,12 +8,23 @@ MyThread::MyThread(QObject *parent) : QObject(parent)
     isStop = false;
 }
 
-void MyThread::initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _hash, int _chess[20][20],
-                        int _vis[3][20][20], int key, int _limit, int _depth,
-                        int _algoFlag, bool _openlog, int _order)
+void MyThread::initial(HASHITEM *_H,
+                       unsigned long _Z[20][20][3],
+                        long long _hash,
+                        int _chess[20][20],
+                        int _vis[3][20][20],
+                        int key,
+                        int _limit,
+                        int _depth,
+                        int _algoFlag,
+                        bool _openlog,
+                        int _order,
+                        int _valTab[20][20][3],
+                        int _priorTab[20][20][3])
 {
     hash = _hash;
     hold = key;
+    memset(sumTab, 0, sizeof(sumTab));
     for(int i = 0; i < 15; i++){
         for(int j = 0; j < 15; j++){
             chess[i][j] = _chess[i][j];
@@ -21,6 +32,14 @@ void MyThread::initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _has
             vis[2][i][j] = _vis[2][i][j];
             Z[i][j][1] = _Z[i][j][1];
             Z[i][j][2] = _Z[i][j][2];
+            valTab[i][j][1] = _valTab[i][j][1];
+            valTab[i][j][2] = _valTab[i][j][2];
+            priorTab[i][j][1] = _priorTab[i][j][1];
+            priorTab[i][j][2] = _priorTab[i][j][2];
+            sumTab[0][1] += _valTab[i][j][1];
+            sumTab[0][2] += _valTab[i][j][2];
+            sumTab[1][1] += _priorTab[i][j][1];
+            sumTab[1][2] += _priorTab[i][j][2];
         }
     }
     limit = _limit;
@@ -185,7 +204,12 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
     if (jump+three >= 2)
         score = Max(score, 50);
 
+<<<<<<< HEAD
     score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
+=======
+    score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three);
+    score += 5/(1+abs(x-7)+abs(y-7));
+>>>>>>> aac07a3ed3c2424844a906d68368d89b82712647
 
     *piority = jump + 2*three + 100*four + 10000*five;
 
@@ -584,21 +608,9 @@ void MyThread::update(QMutex& m, Pos& ret, const Pos ref)
 
 int MyThread::evaluate(int key)
 {
-    int i, j, p;
-    int o_prior=0, d_prior=0, o_val=0, d_val=0;
-    for (i = 0; i < 15; i++)
-        for (j = 0; j < 15; j++){
-            if(chess[i][j] == 3-key)
-            {
-                o_val += valueChess(i, j, 3-key, &p);
-                o_prior += p;
+    int o_prior=sumTab[1][3-key], d_prior=sumTab[1][key];
+    int o_val=sumTab[0][3-key], d_val=sumTab[0][key];
 
-            }
-            if(chess[i][j] == key){
-                d_val += valueChess(i, j, key, &p);
-                d_prior += p;
-            }
-        }
     // 后手方五连
     if (d_prior >= 10000)
         return R_INFINTETY;
@@ -622,11 +634,11 @@ int MyThread::evaluate(int key)
 
 void MyThread::powerOperation(int x, int y, int flag, int key)
 {
-    int i, j, k = key, dx, dy;
+    int i, j, dx, dy, k, p;
 
     if (flag == FLAGS_POWER_CONDESE){
         order++;
-        hash ^= Z[x][y][k];
+        hash ^= Z[x][y][key];
         chess[x][y] = key;
         for(auto dis = 2; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
@@ -637,10 +649,33 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
                 }
             }
         }
+        // 更新权值
+        sumTab[0][key] -= valTab[x][y][key];
+        sumTab[1][key] -= priorTab[x][y][key];
+
+        valTab[x][y][key] = valueChess(x, y, key, &p);
+        priorTab[x][y][key] = p;
+
+        sumTab[0][key] += valTab[x][y][key];
+        sumTab[1][key] += priorTab[x][y][key];
+        for(i=0, j=1; i<8; i++, j=1){
+            dx=x+vx[i];dy=y+vy[i];
+            for(;j<=5 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
+                if(chess[dx][dy] > 0){
+                    k = chess[dx][dy];
+                    sumTab[0][k] -= valTab[dx][dy][k];
+                    sumTab[1][k] -= priorTab[dx][dy][k];
+                    valTab[dx][dy][k] = valueChess(dx, dy, k, &p);
+                    priorTab[dx][dy][k] = p;
+                    sumTab[0][k] += valTab[dx][dy][k];
+                    sumTab[1][k] += priorTab[dx][dy][k];
+                }
+            }
+        }
     }
     else{
         order--;
-        hash ^= Z[x][y][k];
+        hash ^= Z[x][y][key];
         chess[x][y] = 0;
         for(auto dis = 2; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
@@ -648,6 +683,29 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
                 dy = y+vy[i]*j;
                 if(inside(dx, dy)){
                     vis[dis][dx][dy]--;
+                }
+            }
+        }
+        // 更新权值
+        sumTab[0][key] -= valTab[x][y][key];
+        sumTab[1][key] -= priorTab[x][y][key];
+
+        valTab[x][y][key] = 0;
+        priorTab[x][y][key] = 0;
+
+        sumTab[0][key] += valTab[x][y][key];
+        sumTab[1][key] += priorTab[x][y][key];
+        for(i=0, j=1; i<8; i++, j=1){
+            dx=x+vx[i];dy=y+vy[i];
+            for(;j<=5 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
+                if(chess[dx][dy] > 0){
+                    k = chess[dx][dy];
+                    sumTab[0][k] -= valTab[dx][dy][k];
+                    sumTab[1][k] -= priorTab[dx][dy][k];
+                    valTab[dx][dy][k] = valueChess(dx, dy, k, &p);
+                    priorTab[dx][dy][k] = p;
+                    sumTab[0][k] += valTab[dx][dy][k];
+                    sumTab[1][k] += priorTab[dx][dy][k];
                 }
             }
         }
