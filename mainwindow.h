@@ -100,7 +100,7 @@ private:
     Area *area;                                 // 棋盘区域
     bool openlog = false;                       // 日志打开标志
     bool runing = false;                        // 运行状态检查，用于搜索
-    int limit = 7000, limit_kill=3000;         // 最长运行时间
+    int limit = 7000, limit_kill=5000;         // 最长运行时间
     bool isdraw[20][20];                        // 绘制表
     int valTab[20][20][3];                      // 估值表
     int priorTab[20][20][3];                    // 权值表

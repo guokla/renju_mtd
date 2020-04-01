@@ -229,7 +229,7 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
     int hashf = HASH_ALPHA;
     long long hashIndex=0, hashBest=0;
     Pos newMove, bestMove;
-    QVector<Pos> attackQueue, vec_moves;
+    QVector<Pos> attackQueue, vec_moves(rangenum);
 
     if(t2.elapsed() > limit){
         if(runing) runing = false;
@@ -346,7 +346,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
     int hashf = HASH_ALPHA;
     long long hashIndex=0, hashBest=0;
     Pos newMove(i, j, 0, 0, depth-deep), bestMove;
-    QVector<Pos> attackQueue, vec_moves;
+    QVector<Pos> attackQueue, vec_moves(rangenum);
 
     if(t2.elapsed() > limit){
         if(runing) runing = false;
@@ -390,7 +390,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         }
     }else{
         for(Pos temp: attackQueue){
-            if(vec_moves.size() > rangenum) break;
+            if(vec_moves.size() >= rangenum) break;
             count++;
             powerOperation(temp.x, temp.y, FLAGS_POWER_CONDESE, key);
             temp.value = evaluate(key);
@@ -491,7 +491,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
     int hashf = HASH_ALPHA;
     long long hashIndex=0, hashBest;
     Pos newMove, bestMove;
-    QVector<Pos> vec_moves, attackQueue;
+    QVector<Pos> vec_moves(rangenum), attackQueue;
 
     if(t2.elapsed() > limit){
         if(runing) runing = false;
@@ -537,7 +537,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
         }
     }else{
         for(Pos& move: attackQueue){
-            if(vec_moves.size() > rangenum) break;
+            if(vec_moves.size() >= rangenum) break;
             count++;
             powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
             move.value = evaluate(key);
@@ -645,28 +645,28 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
             }
         }
         // 更新权值
-        sumTab[0][key] -= valTab[x][y][key];
-        sumTab[1][key] -= priorTab[x][y][key];
+//        sumTab[0][key] -= valTab[x][y][key];
+//        sumTab[1][key] -= priorTab[x][y][key];
 
-        valTab[x][y][key] = valueChess(x, y, key, &p);
-        priorTab[x][y][key] = p;
+//        valTab[x][y][key] = valueChess(x, y, key, &p);
+//        priorTab[x][y][key] = p;
 
-        sumTab[0][key] += valTab[x][y][key];
-        sumTab[1][key] += priorTab[x][y][key];
-        for(i=0, j=1; i<8; i++, j=1){
-            dx=x+vx[i];dy=y+vy[i];
-            for(;j<=5 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
-                if(chess[dx][dy] > 0){
-                    k = chess[dx][dy];
-                    sumTab[0][k] -= valTab[dx][dy][k];
-                    sumTab[1][k] -= priorTab[dx][dy][k];
-                    valTab[dx][dy][k] = valueChess(dx, dy, k, &p);
-                    priorTab[dx][dy][k] = p;
-                    sumTab[0][k] += valTab[dx][dy][k];
-                    sumTab[1][k] += priorTab[dx][dy][k];
-                }
-            }
-        }
+//        sumTab[0][key] += valTab[x][y][key];
+//        sumTab[1][key] += priorTab[x][y][key];
+//        for(i=0, j=1; i<8; i++, j=1){
+//            dx=x+vx[i];dy=y+vy[i];
+//            for(;j<=5 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
+//                if(chess[dx][dy] > 0){
+//                    k = chess[dx][dy];
+//                    sumTab[0][k] -= valTab[dx][dy][k];
+//                    sumTab[1][k] -= priorTab[dx][dy][k];
+//                    valTab[dx][dy][k] = valueChess(dx, dy, k, &p);
+//                    priorTab[dx][dy][k] = p;
+//                    sumTab[0][k] += valTab[dx][dy][k];
+//                    sumTab[1][k] += priorTab[dx][dy][k];
+//                }
+//            }
+//        }
     }
     else{
         order--;
@@ -682,29 +682,29 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
             }
         }
         // 更新权值
-        sumTab[0][key] -= valTab[x][y][key];
-        sumTab[1][key] -= priorTab[x][y][key];
+//        sumTab[0][key] -= valTab[x][y][key];
+//        sumTab[1][key] -= priorTab[x][y][key];
 
-        valTab[x][y][key] = 0;
-        priorTab[x][y][key] = 0;
+//        valTab[x][y][key] = 0;
+//        priorTab[x][y][key] = 0;
 
-        sumTab[0][key] += valTab[x][y][key];
-        sumTab[1][key] += priorTab[x][y][key];
-        for(i=0, j=1; i<8; i++, j=1){
-            dx=x+vx[i];dy=y+vy[i];
-            for(;j<=5 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
-                if(chess[dx][dy] > 0){
-                    k = chess[dx][dy];
-                    sumTab[0][k] -= valTab[dx][dy][k];
-                    sumTab[1][k] -= priorTab[dx][dy][k];
-                    valTab[dx][dy][k] = valueChess(dx, dy, k, &p);
-                    priorTab[dx][dy][k] = p;
-                    sumTab[0][k] += valTab[dx][dy][k];
-                    sumTab[1][k] += priorTab[dx][dy][k];
-                }
-            }
-        }
-    }
+//        sumTab[0][key] += valTab[x][y][key];
+//        sumTab[1][key] += priorTab[x][y][key];
+//        for(i=0, j=1; i<8; i++, j=1){
+//            dx=x+vx[i];dy=y+vy[i];
+//            for(;j<=5 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
+//                if(chess[dx][dy] > 0){
+//                    k = chess[dx][dy];
+//                    sumTab[0][k] -= valTab[dx][dy][k];
+//                    sumTab[1][k] -= priorTab[dx][dy][k];
+//                    valTab[dx][dy][k] = valueChess(dx, dy, k, &p);
+//                    priorTab[dx][dy][k] = p;
+//                    sumTab[0][k] += valTab[dx][dy][k];
+//                    sumTab[1][k] += priorTab[dx][dy][k];
+//                }
+//            }
+//        }
+//    }
 }
 
 MyThread::~MyThread(){
