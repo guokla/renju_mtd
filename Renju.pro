@@ -43,8 +43,7 @@ FORMS += \
 RESOURCES += \
     src.qrc
 
-DISTFILES += \
-    test1.py
+DISTFILES +=
 
 win32: LIBS += -L$$PWD/../../../Program/Anaconda3/libs/ -lpython36
 

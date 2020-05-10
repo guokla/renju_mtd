@@ -28,17 +28,15 @@ private:
     long long hash = 0;             // 哈希值
     int chess[20][20];              // 棋盘数组
     int vis[3][20][20];             // 棋子能量分布
-    int valTab[20][20][3];
-    int priorTab[20][20][3];
-    int sumTab[2][3];
-    char strTab[3];                 // 字符映射表
     int Kernel = 2;                 // 能量分布
     int hold = 1;
-    int order = 0, init_order=0;
+    int order = 0;
     int limit = 20000;
-    int rangenum = 30;
+    int rangenum = 45;
+    int minX=15, minY=15;
     bool topFlag = true;
-    bool runing = true, openlog = false;
+    bool runing = true;
+    bool openlog = false;
     QTime t2;
     int count=0, ABcut=0, delta=0;  // 节点数、剪枝数
     int tag=0,sto=0,ref=0;          // 命中数、存储数、冲突数
@@ -47,13 +45,30 @@ private:
 
     const int vx[8] = { 0, 1, 1, 1, 0,-1,-1,-1};
     const int vy[8] = {-1,-1, 0, 1, 1, 1, 0,-1};
+    const int add[15][15] = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0},
+        {0, 0, 2, 3, 4, 4, 4, 4, 4, 4, 4, 3, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 5, 5, 5, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 5, 5, 5, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 6, 6, 6, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 6, 7, 6, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 6, 6, 6, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 5, 5, 5, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 4, 5, 5, 5, 5, 5, 5, 5, 4, 2, 0, 0},
+        {0, 0, 2, 3, 4, 4, 4, 4, 4, 4, 4, 3, 2, 0, 0},
+        {0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
 
 public:
 
     void setFlag(bool flag = true);
     void initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _hash, int _chess[20][20],
                     int _vis[3][20][20], int key, int _limit, int _depth, int _algoFlag,
-                    bool _openlog, int _order, int _valTab[20][20][3],int _priorTab[20][20][3]);
+                    bool _openlog, int _order);
 
     // 局面计算函数
     int valueChess(int x, int y, int key, int *piority);

@@ -12,8 +12,7 @@ Area::Area(int x1, int y1, int x2, int y2){
 Area::~Area(){}
 
 bool Area::Among(const int px, const int py){
-    if (px <= Max_x + SIZE && px >= Min_x - SIZE
-            && py <= Max_y + SIZE && py >= Min_y - SIZE)
+    if (px <= Max_x + SIZE && px >= Min_x - SIZE && py <= Max_y + SIZE && py >= Min_y - SIZE)
         return true;
     return false;
 }

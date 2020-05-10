@@ -13,7 +13,7 @@ bool MyThread::lookup(int depth, int alpha, int beta, Pos& ret)
             ret = H[hashInfo].ref;
         }else if(H[hashInfo].flag == HASH_ALPHA && H[hashInfo].ref.value >= alpha){
             ret = H[hashInfo].ref;
-        }else if(H[hashInfo].flag == HASH_BETA  && H[hashInfo].ref.value >= beta){
+        }else if(H[hashInfo].flag == HASH_BETA  && H[hashInfo].ref.value <=  beta){
             ret = H[hashInfo].ref;
         }else
             return false;

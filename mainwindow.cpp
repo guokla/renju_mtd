@@ -1,9 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     this->setMaximumSize(WIDTH_W,HEIGH_W);
@@ -15,9 +13,6 @@ MainWindow::MainWindow(QWidget *parent) :
     memset(valTab, 0, sizeof(valTab));
     memset(priorTab, 0, sizeof(priorTab));
     memset(isdraw, false, sizeof(isdraw));
-//    H[0] = new HASHITEM[HASH_TABLE_SIZE]();
-//    H[1] = new HASHITEM[HASH_TABLE_SIZE]();
-//    H[2] = new HASHITEM[HASH_TABLE_SIZE]();
 
     strTab[0] = ' ';
     strTab[1] = 'M';
@@ -70,10 +65,9 @@ void MainWindow::mousePressEvent(QMouseEvent *e){
             powerOperation(px, py, FLAGS_POWER_CONDESE, hold);
 
             checkWinner(px, py, true);
-            showChess();
+             ui->statusBar->showMessage(tr("[%1,%2]=%3").arg(px).arg(py).arg(evaluate(hold)), 5000);
 
             hold = EXCHANGE - hold;
-            ui->statusBar->showMessage(tr("(%1, %2, %3)").arg(px).arg(py).arg(evaluate(3-hold)), 5000);
         }
     }
     else ui->statusBar->showMessage(tr("超出棋盘区域"), 5000);
@@ -178,7 +172,7 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
             if(chess[i][j] == 0 && vis[2][i][j] > 0){
                 Pos newMove(i, j);
                 powerOperation(i, j, FLAGS_POWER_CONDESE, key);
-                newMove.value = 0.5*valueChess(i, j, key, &p1) + 0.5*valueChess(i, j, 3-key, &p2) + evaluate(key);
+                newMove.value = Max(valueChess(i, j, key, &p1), 0.5*valueChess(i, j, 3-key, &p2) + evaluate(key));
                 powerOperation(i, j, FLAGS_POWER_RELEASE, key);
                 moves.push_back(newMove);
             }
@@ -220,7 +214,7 @@ void MainWindow::powerOperation(int x, int y, int flag, int key)
         order++;
         hash ^= Z[x][y][key];
         chess[x][y] = key;
-        for(auto dis = 1; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
+        for(auto dis = 2; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
                 dx = x+vx[i]*j;
                 dy = y+vy[i]*j;
@@ -229,40 +223,17 @@ void MainWindow::powerOperation(int x, int y, int flag, int key)
                 }
             }
         }
-        // 更新权值
-        valTab[x][y][key] = valueChess(x, y, key, &p);
-        priorTab[x][y][key] = p;
-        for(i=0, j=1; i<8; i++, j=1){
-            dx=x+vx[i];dy=y+vy[i];
-            for(;j<=4 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
-                if(chess[dx][dy] > 0){
-                    valTab[dx][dy][chess[dx][dy]] = valueChess(dx, dy, chess[dx][dy], &p);
-                    priorTab[dx][dy][chess[dx][dy]] = p;
-                }
-            }
-        }
     }
     else{
         order--;
         hash ^= Z[x][y][key];
         chess[x][y] = 0;
-        for(auto dis = 1; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
+        for(auto dis = 2; dis <= Kernel; dis++)for(i = 0; i < 8; i++){
             for(j = 1; j <= dis; j++){
                 dx = x+vx[i]*j;
                 dy = y+vy[i]*j;
                 if(inside(dx, dy)){
                     vis[dis][dx][dy]--;
-                }
-            }
-        }
-        valTab[x][y][key] = 0;
-        priorTab[x][y][key] = 0;
-        for(i=0, j=1; i<8; i++, j=1){
-            dx=x+vx[i];dy=y+vy[i];
-            for(;j<=4 && inside(dx, dy); ++j, dx=x+vx[i]*j, dy=y+vy[i]*j){
-                if(chess[dx][dy] > 0){
-                    valTab[dx][dy][chess[dx][dy]] = valueChess(dx, dy, chess[dx][dy], &p);
-                    priorTab[dx][dy][chess[dx][dy]] = p;
                 }
             }
         }
@@ -383,23 +354,21 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
         }
     }
 
-    if (five >= 1)
-        score = Max(score, 200);
-
-    if (four >= 2)
-        score = Max(score,  120);
-
-    if (four >= 1 && jump+three >= 1)
-        score = Max(score, 80);
-
-    if (jump+three >= 2)
-        score = Max(score, 50);
-
-    score += (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
-
     *piority = jump + 2*three + 100*four + 10000*five;
 
-    return score;
+    if (five >= 1)
+        return 2000;
+
+    if (four >= 2)
+        return 1000;
+
+    if (four >= 1 && jump+three >= 1)
+        return 800;
+
+    if (jump+three >= 2)
+        return 500;
+
+    return (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
 
 }
 
@@ -463,7 +432,7 @@ bool MainWindow::distribution(int key, int time)
     runing = true;
     MyThread *myt = new MyThread();
     myt->moveToThread(&thread);
-    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog, order, valTab, priorTab);
+    myt->initial(H[lock_algo], Z, hash, chess, vis, key, time, depth, algoFlag, openlog, order);
     myt->connect(&thread, &QThread::finished, myt, &QObject::deleteLater); // Mythread与QThread关联
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);

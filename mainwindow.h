@@ -35,7 +35,6 @@
 #include <QThread>
 #include <QList>
 
-
 #include "area.h"
 #include "pos.h"
 #include "zobrist.h"
@@ -47,9 +46,9 @@
 #define EXCHANGE 3              // 交替参数宏
 #define ADVANTAGE 4             // 棋风参数宏
 
-#define R_INFINTETY  1000
+#define R_INFINTETY  10000
 
-const long long HASH_TABLE_SIZE = 1 << 20;    // 哈希表大小
+const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 
 #define HASH_EXACT 0
 #define HASH_ALPHA 1
@@ -57,6 +56,11 @@ const long long HASH_TABLE_SIZE = 1 << 20;    // 哈希表大小
 
 #define FLAGS_POWER_CONDESE   1
 #define FLAGS_POWER_RELEASE   2
+
+//#define FLOAT_CENTER
+
+// const int chessValue[] = {1,2,2,3,3,5,5,50,80,120,200};
+const int chessValue[] = {2,8,12,12,32,32,64,500,800,1000,2000};
 
 #define ONE   1
 #define TWO   10
@@ -76,9 +80,10 @@ const long long HASH_TABLE_SIZE = 1 << 20;    // 哈希表大小
 
 #define Max(a,b) (a)>(b)?(a):(b)
 #define Min(a,b) (a)<(b)?(a):(b)
+#define FF(a,b,c,d) for(int i=(a); i<(b); i++)for(int j=(c); j<(d); j++)
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class MainWindow :  public QMainWindow
@@ -114,7 +119,7 @@ private:
     int Kernel = 2;                             // 能量分布算子大小
     int order=0;                                // 棋子手顺和最新记录
     int rx[N*N], ry[N*N];                       // 棋子手顺位置
-    int rangenum = 15, r=0,c=0;                 // 搜索存储节点数
+    int rangenum = 30, r=0,c=0;                 // 搜索存储节点数
     int count=0, ABcut=0;                       // 节点数、剪枝数
     int tag=0,sto=0,ref=0;                      // 命中数、存储数、冲突数
     QTime t, t2;                                // 计时器
@@ -208,18 +213,17 @@ signals:
     void startThread(const QString &str);
 };
 
-template <class T> struct less {
-  bool operator() (const T& x, const T& y) const {return x<y;}
-  typedef T first_argument_type;
-  typedef T second_argument_type;
-  typedef bool result_type;
+template <class T> struct greater {
+    bool operator() (const T& x, const T& y) const {return x>y;}
 };
 
-template <class T> struct greater {
-  bool operator() (const T& x, const T& y) const {return x>y;}
-  typedef T first_argument_type;
-  typedef T second_argument_type;
-  typedef bool result_type;
+template <class T> struct less {
+    bool operator() (const T& x, const T& y) const {return x<y;}
 };
+
+template<class T>
+void _swap(T &a, T &b){
+    T tmp=a;a=b;b=tmp;
+}
 
 #endif // MAINWINDOW_H
