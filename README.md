@@ -4,11 +4,9 @@
 
 如果你觉得不错的话，可以给个星星哦。
 
-This a task for myself.I realized PVS search algorithm and Zobrist Hash to save repeated situation, it works great.there is MTD(f) algorithm here, It's confused to me that it doesn't faster than others.
+This is an open source backgammon AI program developed by an individual, which implements the PVS and MTD search technology, and can reach a good depth for everyone to learn from. If you have any suggestions, you can send it to my mailbox tydhhzc@163.cm .
 
-Hope to help you in some cases.And maybe you had solve these problem, I will appreciate that you tell me.
-
-I'm sorry that my code is messy and if you don't mind, please do it yourself.
+If you feel good, you can give a star.
 
 **Tips：use release to speed up**
 
