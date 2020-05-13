@@ -105,7 +105,7 @@ private:
     Area *area;                                 // 棋盘区域
     bool openlog = false;                       // 日志打开标志
     bool runing = false;                        // 运行状态检查，用于搜索
-    int limit = 7000, limit_kill=5000;         // 最长运行时间
+    int limit = 10000, limit_kill=5000;         // 最长运行时间
     bool isdraw[20][20];                        // 绘制表
     int valTab[20][20][3];                      // 估值表
     int priorTab[20][20][3];                    // 权值表
@@ -162,17 +162,6 @@ protected:
     void getPosition(int &x,int &y, int key, int flag);
     void powerOperation(int x, int y, int flag, int key);
     void callFunction(Pos& newMove, int flag, const int& judge);
-
-    // MTDF搜索
-    void mtdf(Pos& bestmove, int origin, int f, int deep);
-    int deepening(int origin, int& x, int& y);
-    int alpha_beta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path, Pos& killer);
-
-    // PVS搜索
-    void update(QMutex& m, Pos& ret, const Pos ref, int key, int order, int val);
-    void generate(QVector<Pos>& vec_moves, int key, int args);
-    int killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
-    int deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int beta, QVector<Pos>& path);
     bool distribution(int key, int time);
 
     // 胜负判断

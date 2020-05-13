@@ -521,12 +521,14 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
 
             if(depth == deep && rec_pos == 0){
 
+                // 首发剪枝
                 for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 1000; i++)
                     tmp.push_back(attackQueue[i]);
 
                 for(;i < attackQueue.size(); i++)
                     if (attackQueue[i].a1 + attackQueue[i].a3 >= 100)
                         tmp.push_back(attackQueue[i]);
+
                 cutTreeNode(tmp, vec_moves, path, key);
                 rec = vec_moves;
                 rec_pos = depth;

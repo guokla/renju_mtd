@@ -474,6 +474,7 @@ int MainWindow::checkWinner(int x, int y, bool endFlag){
         thread.quit();
         thread.wait();
         this->close();
+        QThread::sleep(1);
         qApp->quit();
     }
     return judge;
@@ -645,23 +646,6 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 }
             }
     }
-}
-
-void MainWindow::update(QMutex& m, Pos& ret, const Pos ref, int key, int order, int val){
-    m.lock();
-    if(order == ret.a1 && (val >= ret.value || ret.a2 == 0)){
-        if(openlog){
-            qDebug("(%d,%d,%d)->(%d,%d,%d) alpha", ret.x, ret.y, ret.value, ref.x, ref.y, val);
-            powerOperation(ref.x, ref.y, FLAGS_POWER_CONDESE, key);
-            showChess();
-            powerOperation(ref.x, ref.y, FLAGS_POWER_RELEASE, key);
-        }
-        ret.x = ref.x;
-        ret.y = ref.y;
-        ret.value = val;
-        ret.a2++;
-    }
-    m.unlock();
 }
 
 void MainWindow::on_radioButton_clicked()
