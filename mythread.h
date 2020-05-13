@@ -22,7 +22,7 @@ public slots:
 
 private:
     volatile bool isStop;
-    HASHITEM *H;                    // 哈希表
+    HASHITEM *H = nullptr;          // 哈希表
     QMutex mutex;
     unsigned long Z[20][20][3];     // 评分置换表
     long long hash = 0;             // 哈希值
@@ -32,7 +32,7 @@ private:
     int hold = 1;
     int order = 0;
     int limit = 20000;
-    int rangenum = 45;
+    int rangenum = 30;
     int minX=15, minY=15;
     bool topFlag = true;
     bool runing = true;
@@ -75,10 +75,11 @@ public:
     int evaluate(int key);
     void getPosition(Pos& ret, int key);
     void powerOperation(int x, int y, int flag, int key);
+    void cutTreeNode(QVector<Pos>& queue_move, QVector<Pos>& vec_moves, QVector<Pos>& path, int key);
 
     // PVS搜索
     void update(QMutex& m, Pos& ret, const Pos ref);
-    int deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int beta, QVector<Pos>& path);
+    int deepSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
     int killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
     // MTDF搜索

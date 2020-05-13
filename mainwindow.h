@@ -50,9 +50,9 @@
 
 const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 
-#define HASH_EXACT 0
-#define HASH_ALPHA 1
-#define HASH_BETA  2
+#define HASH_EXACT 1
+#define HASH_ALPHA 2
+#define HASH_BETA  3
 
 #define FLAGS_POWER_CONDESE   1
 #define FLAGS_POWER_RELEASE   2
@@ -60,7 +60,7 @@ const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 //#define FLOAT_CENTER
 
 // const int chessValue[] = {1,2,2,3,3,5,5,50,80,120,200};
-const int chessValue[] = {2,8,12,12,32,32,64,500,800,1000,2000};
+const int chessValue[] = {2,8,8,16,32,48,64,250,600,1000,2000};
 
 #define ONE   1
 #define TWO   10
@@ -128,7 +128,7 @@ private:
     int cur_x=0, cur_y=0;                       // 鼠标位置
     int px=0, py=0;                             // 鼠标位置对应的棋盘坐标
     int hold=BLACK;                             // 轮走方，默认BLACK
-    int algoFlag=0, lock_algo=0;                // 算法使用标志
+    int algoFlag=2, lock_algo=2;                // 算法使用标志
     bool stop=false;                            // 计算标识，防止错刷屏幕, false为正常刷屏
     bool change=false;                          // 绘图标识，true表示棋盘有逆向变化(悔棋)
     bool painting=false;                        // 连续绘图标识
@@ -202,9 +202,7 @@ private slots:
     void on_radioButton_9_clicked();
     void on_action_Version_triggered();
     void on_pushButton_clicked();
-
     void on_lineEdit_textChanged(const QString &arg1);
-
     void on_lineEdit_2_textChanged(const QString &arg1);
 
 public slots:

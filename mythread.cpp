@@ -3,6 +3,9 @@
 #include <QDebug>
 #include <QMessageBox>
 
+extern QVector<Pos> rec;
+extern uint32_t rec_pos;
+
 MyThread::MyThread(QObject *parent) : QObject(parent)
 {
     isStop = false;
@@ -31,6 +34,9 @@ void MyThread::initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _has
     openlog = _openlog;
     order = _order;
     H = new HASHITEM[HASH_TABLE_SIZE]();
+    if(H == nullptr){
+        qDebug("failed to create hashtable");
+    }
 }
 
 MyThread::~MyThread(){
@@ -47,7 +53,7 @@ void MyThread::dowork(const QString& str)
             t2.start();
             topFlag = true;
             if(algoFlag == 1){
-                deepSearch(ret, hold, hold, depth, -R_INFINTETY, R_INFINTETY, path);
+                deepSearch(ret, hold, hold, depth, depth, -R_INFINTETY, R_INFINTETY, path);
             }else if(algoFlag == 0){
                 killSearch(ret, hold, depth, -R_INFINTETY,R_INFINTETY, path);
             }else if(algoFlag == 2){
@@ -61,7 +67,6 @@ void MyThread::dowork(const QString& str)
         else temp += "0";
         emit resultReady(temp);
         isStop = true;
-        if(openlog) qDebug("[深度%2d],cnt=%d, tag=%d, sto=%d\n",depth, count, tag, sto);
     }
     else{
         QThread::sleep(1);
@@ -174,27 +179,23 @@ int MyThread::valueChess(int x, int y, int key, int *piority){
         }
     }
 
-    score = 0;
+     *piority = jump + 2*three + 100*four + 10000*five;
 
     if (five >= 1)
-        score = Max(score, chessValue[10]);
+        return chessValue[10];
 
     if (four >= 2)
-        score = Max(score,  chessValue[9]);
+        return chessValue[9];
 
     if (four >= 1 && jump+three >= 1)
-        score = Max(score, chessValue[8]);
+        return chessValue[8];
 
     if (jump+three >= 2)
-        score = Max(score, chessValue[7]);
+        return chessValue[7];
 
-    score = Max(score, (chessValue[0]*sleep_two + chessValue[1]*sleep_three +
-            chessValue[2]*sleep_jump + chessValue[3]*two + chessValue[4]*jump +
-            chessValue[5]*three + chessValue[6]*four + add[x][y]));
-
-    *piority = jump + 2*three + 100*four + 10000*five;
-
-    return score;
+    return chessValue[0]*sleep_two + chessValue[1]*sleep_three +
+           chessValue[2]*sleep_jump + chessValue[3]*two + chessValue[4]*jump +
+           chessValue[5]*three + chessValue[6]*four + add[x][y];
 }
 
 bool inline MyThread::inside(int x, int y){
@@ -209,12 +210,9 @@ bool inline MyThread::inside(Pos move){
     return false;
 }
 
-int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int beta, QVector<Pos>& path)
+int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path)
 {
-    int i, j, p1, p2, k, three=0;
-    int hashf = HASH_ALPHA;
-    long long hashIndex=0, hashBest=0;
-    Pos newMove, bestMove;
+    int i, j, p1, p2, k;
     QVector<Pos> attackQueue, vec_moves;
 
     if(t2.elapsed() > limit){
@@ -223,61 +221,59 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
     }
 
     // 检查游戏是否结束
-    if(depth > deep && path.last().a1 >= 10000)
+    if(rec > deep && path.last().a1 >= 10000)
         return -R_INFINTETY;
-
-    // 查找哈希表
-    if(lookup(deep, alpha, beta, newMove)){
-
-        newMove.a2 = depth - deep;
-        valueChess(newMove.x, newMove.y, key, &newMove.a1);
-
-        update(mutex, ret, newMove);
-        return newMove.value;
-    }
 
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if(chess[i][j] == 0 && vis[2][i][j] >= 1){
+            if(chess[i][j] == 0 && vis[2][i][j] >= 2){
                 // 算杀的结点选择
                 // 进攻方：活三、冲四、活四、五连、防守对方的冲四
                 // 防守方：防守对方的活三、冲四，自身的冲四
-                k = 2*valueChess(i, j, key, &p1) + valueChess(i, j, 3-key, &p2);
+                k = Max(1.5*valueChess(i, j, key, &p1), valueChess(i, j, 3-key, &p2));
                 if(origin == key){
                     // 进攻方选点，己方的进攻棋，和对方的冲四棋
                     if(p1 > 0 || p2 >= 10000){
-                        attackQueue.push_back(Pos(i, j, k, p1, depth-deep));
+                        attackQueue.push_back(Pos(i, j, k, p1, rec-deep));
                     }
                 }else{
                     // 防守方选点，己方的冲四棋，和对方的进攻棋
                     if(p2 > 0 || p1 >= 100){
-                        attackQueue.push_back(Pos(i, j, k, p1, depth-deep));
+                        attackQueue.push_back(Pos(i, j, k, p1, rec-deep));
                     }
                 }
             }
         }
     }
 
+    // 进攻方无棋
+    if(origin == key && attackQueue.isEmpty())
+        return alpha;
+    // 防守方无棋
+    if(origin == 3-key && attackQueue.isEmpty())
+        return -R_INFINTETY;
+
     qSort(attackQueue.begin(), attackQueue.end(), [](Pos& a, Pos &b){
         return a.value > b.value;
     });
 
     //五连棋型
-    if (attackQueue[0].value >= 10000){
-        for(i=0; attackQueue[i].value >= 10000 && i < attackQueue.size(); i++)
+    if (attackQueue[0].value >= 2000){
+        for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 2000; i++)
             vec_moves.push_back(attackQueue[i]);
     }
-    //四连棋型
-    else if (attackQueue[0].value >= 2000){
-        for(i=0; attackQueue[i].value >= 2000 && i < attackQueue.size(); i++)
+    //己方四连
+    else if (attackQueue[0].value >= 1500){
+        for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 1500; i++)
             vec_moves.push_back(attackQueue[i]);
     }
+    //对方四连
     else if (attackQueue[0].value >= 1000){
-        for(i=0; attackQueue[i].value >= 1000 && i < attackQueue.size(); i++)
+        for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 1000; i++)
             vec_moves.push_back(attackQueue[i]);
-        for(i=0; i < attackQueue.size(); i++){
-            valueChess(attackQueue[i].x, attackQueue[i].y, key, &p1);
-            if (p1 >= 100) vec_moves.push_back(attackQueue[i]);
+        for(;i < attackQueue.size(); i++){
+            if (attackQueue[i].a1 + attackQueue[i].a3 >= 100)
+                vec_moves.push_back(attackQueue[i]);
         }
     }
     // 普通情况
@@ -301,43 +297,30 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int alpha, int
         return a.value > b.value;
     });
 
-    if(origin == key && vec_moves[0].a1 >= 10000){
-        update(mutex, ret, vec_moves[0]);
-        return beta;
-    }
-
-    if(topFlag) topFlag = false;
     for(Pos& move: vec_moves){
 
         powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
         path.push_back(move);
 
         if(deep > 1)
-            move.value = - deepSearch(ret, origin, 3-key, deep-1, -beta, -alpha, path);
+            move.value = - deepSearch(ret, origin, 3-key, deep-1, rec, -beta, -alpha, path);
         else{
             move.value = evaluate(key);
-            if(runing) store(mutex, HASH_EXACT, hash, move, deep);
         }
 
-        hashIndex = hash;
         path.pop_back();
         powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
 
         if(move.value > alpha){
             alpha = move.value;
-            hashf = HASH_EXACT;
-            hashBest = hashIndex;
-            bestMove = move;
             update(mutex, ret, move);
         }
 
         if (move.value >= beta){
             ABcut++;
-            if(runing) store(mutex, HASH_BETA, hashIndex, move, deep);
             return move.value;
         }
     }
-    if(runing) store(mutex, hashf, hashBest, bestMove, deep);
     return alpha;
 
 }
@@ -355,7 +338,8 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
         return alpha;
     }
 
-    if(path.last().a1 >= 10000) return -R_INFINTETY;
+    if(depth > deep && path.last().a1 >= 10000)
+        return -R_INFINTETY;
 
     if(lookup(deep, alpha, beta, newMove)){
         update(mutex, ret, newMove);
@@ -365,7 +349,7 @@ int MyThread::killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVect
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
             if(chess[i][j] == 0 && vis[2][i][j] >= 2){
-                k = 2*valueChess(i, j, key, &p1) + valueChess(i, j, 3-key, &p2);
+                k = Max(1.5*valueChess(i, j, key, &p1), valueChess(i, j, 3-key, &p2));
                 attackQueue.push_back(Pos{i, j, k, p1, depth-deep, Max(p1, p2)});
             }
         }
@@ -483,7 +467,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
     int hashf = HASH_ALPHA;
     long long hashIndex=0, hashBest;
     Pos newMove, bestMove;
-    QVector<Pos> vec_moves, attackQueue;
+    QVector<Pos> vec_moves, attackQueue, tmp;
 
     if(t2.elapsed() > limit){
         if(runing) runing = false;
@@ -504,42 +488,71 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
         return newMove.value;
     }
 
+    if(rec_pos > 0 && depth == deep){
+        // 读取记录
+        vec_moves = rec;
+    }else{
+        // 生成合适着法
+        for (i = 0; i < 15; i++){
+            for (j = 0; j < 15; j++){
+                if (vis[2][i][j] >= 2 && chess[i][j] == 0){
+                    k = Max(1.5*valueChess(i, j, key, &p1), valueChess(i, j, 3-key, &p2));
+                    attackQueue.push_back(Pos(i, j, k, p1, depth-deep, p2));
+                }
+            }
+        }
 
-    // 生成合适着法
-    for (i = 0; i < 15; i++){
-        for (j = 0; j < 15; j++){
-            if (vis[2][i][j] >= 2 && chess[i][j] == 0){
-                attackQueue.push_back(Pos(i, j, 1.1*valueChess(i, j, key, &p1) + valueChess(i, j, 3-key, &p2), p1, depth-deep, 0));
+        qSort(attackQueue.begin(), attackQueue.end(), [](Pos& a, Pos &b){
+            return a.value > b.value;
+        });
+
+        //五连棋型
+        if (attackQueue[0].value >= 2000){
+            for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 2000; i++)
+                vec_moves.push_back(attackQueue[i]);
+        }
+        //己方四连
+        else if (attackQueue[0].value >= 1500){
+            for(i = 0;i < attackQueue.size() && attackQueue[i].value >= 1500; i++)
+                vec_moves.push_back(attackQueue[i]);
+        }
+        //对方四连
+        else if (attackQueue[0].value >= 1000){
+
+            if(depth == deep && rec_pos == 0){
+
+                for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 1000; i++)
+                    tmp.push_back(attackQueue[i]);
+
+                for(;i < attackQueue.size(); i++)
+                    if (attackQueue[i].a1 + attackQueue[i].a3 >= 100)
+                        tmp.push_back(attackQueue[i]);
+                cutTreeNode(tmp, vec_moves, path, key);
+                rec = vec_moves;
+                rec_pos = depth;
+
+            }else{
+
+                for(i = 0; i < attackQueue.size() && attackQueue[i].value >= 1000; i++)
+                    vec_moves.push_back(attackQueue[i]);
+
+                for(;i < attackQueue.size(); i++)
+                    if (attackQueue[i].a1 + attackQueue[i].a3 >= 100)
+                        vec_moves.push_back(attackQueue[i]);
+            }
+
+        }else{
+            if(depth == deep && rec_pos == 0){
+                // 首发剪枝
+                cutTreeNode(attackQueue, vec_moves, path, key);
+                rec = vec_moves;
+                rec_pos = depth;
+            }else{
+                // 普通情况
+                vec_moves = attackQueue;
             }
         }
     }
-
-    qSort(attackQueue.begin(), attackQueue.end(), [](Pos& a, Pos &b){
-        return a.value > b.value;
-    });
-
-    //五连棋型
-    if (attackQueue[0].value >= 10000){
-        for(i=0; attackQueue[i].value >= 11000 && i < attackQueue.size(); i++)
-            vec_moves.push_back(attackQueue[i]);
-    }
-    //四连棋型
-    else if (attackQueue[0].value >= 1100){
-        for(i=0; attackQueue[i].value >= 1100 && i < attackQueue.size(); i++)
-            vec_moves.push_back(attackQueue[i]);
-    }
-    else if (attackQueue[0].value >= 1000){
-        for(i=0; attackQueue[i].value >= 1000 && i < attackQueue.size(); i++)
-            vec_moves.push_back(attackQueue[i]);
-        for(; i < attackQueue.size(); i++){
-            valueChess(attackQueue[i].x, attackQueue[i].y, key, &p1);
-            if (p1 >= 100) vec_moves.push_back(attackQueue[i]);
-        }
-    }
-    // 普通情况
-    else
-        vec_moves.swap(attackQueue);
-
 
     // 遍历搜索树
     int cnt = 0;
@@ -581,11 +594,57 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
     return cur;
 }
 
+void MyThread::cutTreeNode(QVector<Pos>& queue_move, QVector<Pos>& vec_moves, QVector<Pos>& path, int key){
+
+    if(queue_move.isEmpty())
+        return;
+
+    Pos newMove;
+    int MaxDeep = (queue_move.size() <= rangenum/2) ? (10) : (8);
+
+    for(Pos &move: queue_move)
+    {
+        powerOperation(move.x, move.y, FLAGS_POWER_CONDESE, key);
+        path.push_back(move);
+        newMove.value = evaluate(3-key);
+        for(int d = 2; d <= MaxDeep && newMove.value < chessValue[10]; d += 2){
+            newMove.value = deepSearch(newMove, 3-key, 3-key, d, d, -R_INFINTETY, R_INFINTETY, path);
+            move.a3 = d;
+        }
+        path.pop_back();
+        powerOperation(move.x, move.y, FLAGS_POWER_RELEASE, key);
+
+        if(newMove.value < chessValue[10]){
+            vec_moves.push_back(move);
+        }
+    }
+
+    // 当全为必败着法时，保存最长的结果
+    if(vec_moves.isEmpty()){
+
+        if(openlog){
+            qDebug("No enough move, find longest move");
+        }
+
+        qSort(queue_move.begin(), queue_move.end(), [](Pos &a, Pos &b){
+            return a.a3 > b.a3;
+        });
+
+        vec_moves.push_back(queue_move[0]);
+        for(int i=1; i < queue_move.size() && queue_move[i].a3 >= vec_moves[0].a3; i++){
+            vec_moves.push_back(queue_move[i]);
+        }
+    }
+    if(openlog){
+        qDebug("[%d -> %d]", queue_move.size(), vec_moves.size());
+    }
+}
+
 void MyThread::update(QMutex& m, Pos& ret, const Pos ref)
 {
     QMutexLocker locker(&m);
-    if(ref.a2 == ret.a2 && (ref.value > ret.value || ret.a3 == 0)){
-        if(openlog) qDebug("(%d,%d,%d)->(%d,%d,%d) alpha", ret.x, ret.y, ret.value, ref.x, ref.y, ref.value);
+    if(inside(ref) && ref.a2 == ret.a2 && (ref.value > ret.value || !inside(ret))){
+//        if(openlog) qDebug("(%d,%d,%d)->(%d,%d,%d) alpha", ret.x, ret.y, ret.value, ref.x, ref.y, ref.value);
         ret.x = ref.x;
         ret.y = ref.y;
         ret.value = ref.value;
@@ -648,11 +707,6 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
                 vis[2][dx][dy]++;
             }
         }
-//        FF(x-2, x+3, y-2, y+3){
-//            if(inside(i, j)){
-//                vis[2][i][j]++;
-//            }
-//        }
     }
     else{
         order--;
@@ -665,10 +719,5 @@ void MyThread::powerOperation(int x, int y, int flag, int key)
                 vis[2][dx][dy]--;
             }
         }
-//        FF(x-2, x+3, y-2, y+3){
-//            if(inside(i, j)){
-//                vis[2][i][j]--;
-//            }
-//        }
     }
 }

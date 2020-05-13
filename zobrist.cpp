@@ -30,7 +30,7 @@ bool MyThread::store(QMutex &m, int hashf, long long hashIndex, const Pos ret, i
     QMutexLocker locker(&m);
     hashInfo = hashIndex & (HASH_TABLE_SIZE - 1);
 
-    if(H[hashInfo].ref.a2 < deep || H[hashInfo].flag > 2 || H[hashInfo].flag < 0){
+    if(H[hashInfo].flag > 2 || H[hashInfo].flag < 0){
         sto++;
         H[hashInfo].checknum = hash;
         H[hashInfo].flag     = hashf;

@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+extern QVector<Pos> rec;
+extern uint32_t rec_pos;
+
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -199,6 +202,8 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
             algoFlag = 1;
             t2.start();
             result.clear();
+            rec_pos = 0;
+            rec.clear();
             distribution(key, limit_kill);
         }else{
             qDebug() << "wrong operation";
@@ -465,6 +470,10 @@ int MainWindow::checkWinner(int x, int y, bool endFlag){
             QMessageBox::warning(this, tr("提示"), tr("黑棋已取得胜利！"));
         else if(judge == WHITE)
             QMessageBox::warning(this, tr("提示"), tr("白棋已取得胜利！"));
+        // 退出程序
+        thread.quit();
+        thread.wait();
+        this->close();
         qApp->quit();
     }
     return judge;
@@ -481,10 +490,10 @@ void MainWindow::dealSignal(const QString &str)
     thread.wait();
     for(i = 0; i < j; i++)
         recive[i]=str.section(',', i+1, i+1).toLong();
-    if(openlog){
-        qDebug() << str;
-        qDebug() << "result=" << result.x << result.y << result.value << result.a1;
-    }
+//    if(openlog){
+//        qDebug() << str;
+//        qDebug() << "result=" << result.x << result.y << result.value << result.a1;
+//    }
     Pos newMove(recive[0], recive[1], recive[2], recive[3]);
 
     // 简单判定，如果是必应着法直接落子
