@@ -52,7 +52,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::mousePressEvent(QMouseEvent *e){
 
-    int p1;
+    int p1, p2;
     cur_x = e->x();
     cur_y = e->y();
 
@@ -63,12 +63,13 @@ void MainWindow::mousePressEvent(QMouseEvent *e){
 
         if (chess[px][py] == 0){
             valueChess(px, py, hold, &p1);
+            valueChess(px, py, 3-hold, &p2);
             Pos move = {px, py, 0, p1};
             moveQueue.push_back(move);
             powerOperation(px, py, FLAGS_POWER_CONDESE, hold);
 
             checkWinner(px, py, true);
-             ui->statusBar->showMessage(tr("[%1,%2]=%3").arg(px).arg(py).arg(evaluate(hold)), 5000);
+            ui->statusBar->showMessage(tr("[%1,%2]=%3").arg(px).arg(py).arg(p1+p2), 5000);
 
             hold = EXCHANGE - hold;
         }
@@ -259,7 +260,6 @@ bool inline MainWindow::inside(Pos move){
 
 int MainWindow::valueChess(int x, int y, int key, int *piority){
     int i, j;
-    int score = 0;
 
     int p[8];                   // p对应方向的子力
     int b[8];                   // blank对应方向的子力，之后的空位
@@ -359,22 +359,23 @@ int MainWindow::valueChess(int x, int y, int key, int *piority){
         }
     }
 
-    *piority = jump + 2*three + 100*four + 10000*five;
+     *piority = jump + 2*three + 100*four + 10000*five;
 
     if (five >= 1)
-        return 2000;
+        return chessValue[10];
 
     if (four >= 2)
-        return 1000;
+        return chessValue[9];
 
     if (four >= 1 && jump+three >= 1)
-        return 800;
+        return chessValue[8];
 
     if (jump+three >= 2)
-        return 500;
+        return chessValue[7];
 
-    return (sleep_two + 2*sleep_three + 2*sleep_jump + 2*jump + 3*two + 5*three + 4*four);
-
+    return chessValue[0]*sleep_two + chessValue[1]*sleep_three +
+           chessValue[2]*sleep_jump + chessValue[3]*two + chessValue[4]*jump +
+           chessValue[5]*three + chessValue[6]*four + add[x][y];
 }
 
 int MainWindow::evaluate(int key)
