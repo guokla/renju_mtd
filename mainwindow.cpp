@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-extern QVector<Pos> rec;
-extern uint32_t rec_pos;
+extern QVector<Pos> root_mtd;
+extern QVector<Pos> root_kill;
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -203,8 +203,8 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
             algoFlag = 1;
             t2.start();
             result.clear();
-            rec_pos = 0;
-            rec.clear();
+            root_kill.clear();
+            root_mtd.clear();
             distribution(key, limit_kill);
         }else{
             qDebug() << "wrong operation";
@@ -501,14 +501,14 @@ void MainWindow::dealSignal(const QString &str)
     // 简单判定，如果是必应着法直接落子
     valueChess(newMove.x, newMove.y, 3-hold, &newMove.a3);
     valueChess(newMove.x, newMove.y, hold, &newMove.a1);
-    if(newMove.a3 >= 10000 || newMove.a1 >= 10000){
+    if(newMove.a3 >= 10000 || newMove.a1 >= 10000 || recive[3] == 1){
         moveQueue.push_back(newMove);
         powerOperation(newMove.x, newMove.y, FLAGS_POWER_CONDESE, hold);
         checkWinner(newMove.x, newMove.y, true);
         hold = EXCHANGE - hold;
         runing = false;
         QString temp;
-        temp.sprintf("[绝对先手: %2d,%2d]\n\n", newMove.x, newMove.y);
+        temp.sprintf("[唯一着法: %2d,%2d]\n\n", newMove.x, newMove.y);
         buffer += temp;
         return;
     }

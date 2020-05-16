@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include <QApplication>
 
-QVector<Pos> rec;
-uint32_t rec_pos;
+QVector<Pos> root_mtd;
+QVector<Pos> root_kill;
 
 int main(int argc, char *argv[])
 {

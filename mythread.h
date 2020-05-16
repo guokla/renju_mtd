@@ -33,7 +33,6 @@ private:
     int order = 0;
     int limit = 20000;
     int rangenum = 30;
-    int minX=15, minY=15;
     bool topFlag = true;
     bool runing = true;
     bool openlog = false;
@@ -80,7 +79,9 @@ public:
     // PVS搜索
     void update(QMutex& m, Pos& ret, const Pos ref);
     int deepSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
+    int checkSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
     int killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
+
 
     // MTDF搜索
     int deepening(int origin, int& x, int& y);
