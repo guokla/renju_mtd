@@ -60,7 +60,7 @@ const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 //#define FLOAT_CENTER
 
 // const int chessValue[] = {1,2,2,3,3,5,5,50,80,120,200};
-const int chessValue[] = {2,8,8,16,32,48,64,250,600,1000,2000};
+const int chessValue[] = {2,8,8,24,32,48,64,250,600,1000,2000};
 
 #define ONE   1
 #define TWO   10
