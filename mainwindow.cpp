@@ -443,6 +443,8 @@ bool MainWindow::distribution(int key, int time)
     myt->connect(myt, &MyThread::resultReady, this, &MainWindow::dealSignal);
     myt->connect(this, &MainWindow::startThread, myt, &MyThread::dowork);
     thread.start();
+    if(depth == 2 && algoFlag == 2)
+        guess = -result.value;
     emit startThread(QString::number(guess));
     return true;
 }
@@ -525,7 +527,9 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
         // 算杀
         if(judge == 1 && inside(newMove))
         {
-            result = newMove;
+            if(!(depth&1)){
+                result = newMove;
+            }
             QString temp;
             temp.sprintf("[kill: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
@@ -563,7 +567,9 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
         // PVS
         if(judge == 1 && inside(newMove))
         {
-            result = newMove;
+            if(!(depth&1)){
+                result = newMove;
+            }
             QString temp;
             temp.sprintf("[PVS: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
@@ -586,7 +592,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 QString temp;
                 temp.sprintf("[PVS: 深度%d] = timeout, time: %.3f s\n\n", depth, t2.elapsed()/1000.0);
                 buffer += temp;
-                result.clear();
+                result.x = 0;
                 return;
             }else{
                 getPosition(result.x, result.y, hold, 3);
@@ -606,7 +612,10 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             // MTD
             if(judge == 1 && inside(newMove))
             {
-                result = newMove;
+                if(!(depth&1)){
+                    result = newMove;
+                }
+
                 QString temp;
                 temp.sprintf("[MTD: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
                 buffer += temp;
@@ -630,7 +639,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                     QString temp;
                     temp.sprintf("[MTD: 深度%d] = timeout, time: %.3f s\n\n", depth, t2.elapsed()/1000.0);
                     buffer += temp;
-                    result.clear();
+                    result.x = 0;
                     return;
                 }else{
                     getPosition(result.x, result.y, hold, 3);

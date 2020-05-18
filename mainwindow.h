@@ -59,7 +59,7 @@ const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 
 //#define FLOAT_CENTER
 
-// const int chessValue[] = {1,2,2,3,3,5,5,50,80,120,200};
+//const int chessValue[] = {1,2,2,3,4,5,6,250,600,1000,2000};
 const int chessValue[] = {2,8,8,24,32,48,64,250,600,1000,2000};
 
 #define ONE   1
@@ -112,8 +112,8 @@ private:
     int val_black=0, val_white=0;               //
     char strTab[3];                             // 字符映射表
     HASHITEM *H[3];                             // 哈希表
-    unsigned long Z[20][20][3];                 // 评分置换表
-    long long hash = 0;                         // 哈希值
+    uint64_t Z[20][20][3];                      // 评分置换表
+    uint64_t hash = 0;                         // 哈希值
     int chess[20][20];                          // 棋盘数组
     int vis[3][20][20];                         // 棋子能量分布
     int Kernel = 2;                             // 能量分布算子大小

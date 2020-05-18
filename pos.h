@@ -21,7 +21,7 @@ struct Pos
         value=a1=a2=a3=0;
     }
 
-    Pos(int _x=20, int _y=20, int _value=0, int _a1=0, int _a2=0, int _a3=0)
+    Pos(int _x=-1, int _y=-1, int _value=0, int _a1=0, int _a2=0, int _a3=0)
         :x(_x), y(_y), value(_value), a1(_a1), a2(_a2), a3(_a3){}
 
 };

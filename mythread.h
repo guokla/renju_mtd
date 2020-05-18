@@ -24,15 +24,15 @@ private:
     volatile bool isStop;
     HASHITEM *H = nullptr;          // 哈希表
     QMutex mutex;
-    unsigned long Z[20][20][3];     // 评分置换表
-    long long hash = 0;             // 哈希值
+    uint64_t Z[20][20][3];     // 评分置换表
+    uint64_t hash = 0;             // 哈希值
     int chess[20][20];              // 棋盘数组
     int vis[3][20][20];             // 棋子能量分布
     int Kernel = 2;                 // 能量分布
     int hold = 1;
     int order = 0;
     int limit = 20000;
-    int rangenum = 30;
+    int rangenum = 45;
     bool topFlag = true;
     bool runing = true;
     bool openlog = false;
@@ -65,7 +65,7 @@ private:
 public:
 
     void setFlag(bool flag = true);
-    void initial(HASHITEM *_H, unsigned long _Z[20][20][3], long long _hash, int _chess[20][20],
+    void initial(HASHITEM *_H, uint64_t _Z[20][20][3], uint64_t _hash, int _chess[20][20],
                     int _vis[3][20][20], int key, int _limit, int _depth, int _algoFlag,
                     bool _openlog, int _order);
 
