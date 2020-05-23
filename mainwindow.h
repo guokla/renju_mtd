@@ -57,10 +57,8 @@ const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 #define FLAGS_POWER_CONDESE   1
 #define FLAGS_POWER_RELEASE   2
 
-//#define FLOAT_CENTER
-
 //const int chessValue[] = {1,2,2,3,4,5,6,250,600,1000,2000};
-const int chessValue[] = {2,8,8,24,32,48,64,250,600,1000,2000};
+const int chessValue[] = {2,8,8,16,32,48,64,250,600,1000,2000};
 
 #define ONE   1
 #define TWO   10
@@ -120,8 +118,6 @@ private:
     int order=0;                                // 棋子手顺和最新记录
     int rx[N*N], ry[N*N];                       // 棋子手顺位置
     int rangenum = 30, r=0,c=0;                 // 搜索存储节点数
-    int count=0, ABcut=0;                       // 节点数、剪枝数
-    int tag=0,sto=0,ref=0;                      // 命中数、存储数、冲突数
     QTime t, t2;                                // 计时器
     int depth = 1;
     int guess = 0;

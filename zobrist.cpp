@@ -2,6 +2,8 @@
 #include "mainwindow.h"
 #include "mythread.h"
 
+extern int count, ABcut, tag, sto;
+
 bool MyThread::lookup(int depth, int alpha, int beta, Pos& ret)
 {
     uint64_t hashInfo = hash & (HASH_TABLE_SIZE - 1); // 获取局面在表中位置

@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include <QApplication>
 
-QVector<Pos> root_mtd;
-QVector<Pos> root_kill;
+QVector<Pos> root;
+int Count, ABcut, tag, sto;
 
 int main(int argc, char *argv[])
 {

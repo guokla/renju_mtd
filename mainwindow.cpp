@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-extern QVector<Pos> root_mtd;
-extern QVector<Pos> root_kill;
+extern QVector<Pos> root;
+extern int Count, ABcut, tag, sto;
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -69,7 +69,12 @@ void MainWindow::mousePressEvent(QMouseEvent *e){
             powerOperation(px, py, FLAGS_POWER_CONDESE, hold);
 
             checkWinner(px, py, true);
-            ui->statusBar->showMessage(tr("[%1,%2]=%3").arg(px).arg(py).arg(p1+p2), 5000);
+            ui->statusBar->showMessage(tr("[%1,%2]=%3,%4,%5")
+                                       .arg(px)
+                                       .arg(py)
+                                       .arg(1.5*valueChess(px, py, hold, &p1))
+                                       .arg(valueChess(px, py, 3-hold, &p2))
+                                       .arg(evaluate(hold)), 5000);
 
             hold = EXCHANGE - hold;
         }
@@ -203,8 +208,8 @@ void MainWindow::getPosition(int &x, int &y, int key, int flag)
             algoFlag = 1;
             t2.start();
             result.clear();
-            root_kill.clear();
-            root_mtd.clear();
+            root.clear();
+            Count=ABcut=tag=sto=0;
             distribution(key, limit_kill);
         }else{
             qDebug() << "wrong operation";
@@ -534,14 +539,17 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             temp.sprintf("[kill: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
             if(newMove.value < R_INFINTETY){
-                depth += delta;
+                if(newMove.value < 200)
+                    depth += delta*2;
+                else
+                    depth += delta;
                 distribution(hold, limit_kill - t2.elapsed());
             }
         }
         if(judge == 0 || !inside(newMove) || newMove.value >= R_INFINTETY)
         {
             QString temp;
-            temp.sprintf("[kill: 搜索结束]\n\n");
+            temp.sprintf("[kill:搜索结束]: Count=%d, ABCut=%d]\n\n", Count, ABcut);
             buffer += temp;
             if(inside(result) && result.value >= R_INFINTETY)
             {
@@ -590,7 +598,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                 checkWinner(result.x, result.y, true);
                 hold = EXCHANGE - hold;
                 QString temp;
-                temp.sprintf("[PVS: 深度%d] = timeout, time: %.3f s\n\n", depth, t2.elapsed()/1000.0);
+                temp.sprintf("[PVS: 深度%d] = timeout, time: %.3f s\nCount=%d, ABCut=%d\nTarget=%d, Store=%d\n\n", depth, t2.elapsed()/1000.0, Count, ABcut, tag, sto);
                 buffer += temp;
                 result.x = 0;
                 return;
@@ -637,7 +645,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                     checkWinner(result.x, result.y, true);
                     hold = EXCHANGE - hold;
                     QString temp;
-                    temp.sprintf("[MTD: 深度%d] = timeout, time: %.3f s\n\n", depth, t2.elapsed()/1000.0);
+                    temp.sprintf("[MTD: 深度%d] = time: %.3f s\nCount=%d, ABCut=%d\nTarget=%d, Store=%d\n\n", depth, t2.elapsed()/1000.0, Count, ABcut, tag, sto);
                     buffer += temp;
                     result.x = 0;
                     return;

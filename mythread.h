@@ -37,8 +37,6 @@ private:
     bool runing = true;
     bool openlog = false;
     QTime t2;
-    int count=0, ABcut=0, delta=0;  // 节点数、剪枝数
-    int tag=0,sto=0,ref=0;          // 命中数、存储数、冲突数
     int depth;
     int algoFlag = 0;
 
@@ -80,7 +78,7 @@ public:
     void update(QMutex& m, Pos& ret, const Pos ref);
     int deepSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
     int checkSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
-    int killSearch(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
+    int PVS(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
 
     // MTDF搜索
