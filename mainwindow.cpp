@@ -539,7 +539,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             temp.sprintf("[kill: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
             if(newMove.value < R_INFINTETY){
-                if(newMove.value < 200)
+                if(newMove.value < 200 && depth >= 4)
                     depth += delta*2;
                 else
                     depth += delta;
