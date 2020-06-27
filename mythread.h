@@ -24,8 +24,8 @@ private:
     volatile bool isStop;
     HASHITEM *H = nullptr;          // 哈希表
     QMutex mutex;
-    uint64_t Z[20][20][3];     // 评分置换表
-    uint64_t hash = 0;             // 哈希值
+    uint64_t Z[20][20][3];          // 评分置换表
+    uint64_t hash = 0;              // 哈希值
     int chess[20][20];              // 棋盘数组
     int vis[3][20][20];             // 棋子能量分布
     int Kernel = 2;                 // 能量分布
@@ -72,20 +72,20 @@ public:
     int evaluate(int key);
     void getPosition(Pos& ret, int key);
     void powerOperation(int x, int y, int flag, int key);
-    void cutTreeNode(QVector<Pos>& queue_move, QVector<Pos>& vec_moves, QVector<Pos>& path, int key);
 
-    // PVS搜索
-    void update(QMutex& m, Pos& ret, const Pos ref);
+    // 辅助搜索
+    void cutTreeNode(QVector<Pos>& queue_move, QVector<Pos>& vec_moves, QVector<Pos>& path, int key);
     int deepSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
     int checkSearch(Pos& ret, int origin, int key, int deep, int rec, int alpha, int beta, QVector<Pos>& path);
-    int PVS(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
+    void update(QMutex& m, Pos& ret, const Pos ref);
 
+    // PVS搜索
+    int PVS(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
     // MTDF搜索
     int deepening(int origin, int& x, int& y);
     void MTD(Pos& bestmove, int origin, int f, int deep);
     int MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
-    int alphabeta(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>& path);
 
     // 越界检查函数
     bool inline inside(int x, int y);

@@ -236,7 +236,7 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int rec, int a
     // 获取着法
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if(vis[2][i][j] >= 2 && chess[i][j] == 0){
+            if((vis[2][i][j] >= 2 || (vis[2][i][j] >= 1 && depth==deep)) && chess[i][j] == 0){
                 // 算杀的结点选择
                 // 进攻方：活三、冲四、活四、五连、防守对方的冲四
                 // 防守方：防守对方的活三、冲四，自身的冲四
@@ -302,7 +302,7 @@ int MyThread::deepSearch(Pos& ret, int origin, int key, int deep, int rec, int a
             else if(attackQueue[i].a3 >= 100){
                 dx = abs(attackQueue[i].x - attackQueue[0].x);
                 dy = abs(attackQueue[i].y - attackQueue[0].y);
-                if((dx == dy && dx <= 3) || (dx == 0 && dy <= 3) || (dy == 0 && dx <= 3))
+                if((dx == dy && dx <= 4) || (dx == 0 && dy <= 4) || (dy == 0 && dx <= 4))
                     vec_moves.push_back(attackQueue[i]);
             }
         }
@@ -452,7 +452,7 @@ int MyThread::PVS(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>
                     else if(attackQueue[i].a3 >= 100){
                         dx = abs(attackQueue[i].x - attackQueue[0].x);
                         dy = abs(attackQueue[i].y - attackQueue[0].y);
-                        if((dx == dy && dx <= 3) || (dx == 0 && dy <= 3) || (dy == 0 && dx <= 3))
+                        if((dx == dy && dx <= 4) || (dx == 0 && dy <= 4) || (dy == 0 && dx <= 4))
                             tmp.push_back(attackQueue[i]);
                     }
                 }
@@ -471,7 +471,7 @@ int MyThread::PVS(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>
                     else if(attackQueue[i].a3 >= 100){
                         dx = abs(attackQueue[i].x - attackQueue[0].x);
                         dy = abs(attackQueue[i].y - attackQueue[0].y);
-                        if((dx == dy && dx <= 3) || (dx == 0 && dy <= 3) || (dy == 0 && dx <= 3))
+                        if((dx == dy && dx <= 4) || (dx == 0 && dy <= 4) || (dy == 0 && dx <= 4))
                             vec_moves.push_back(attackQueue[i]);
                     }
                 }
@@ -565,7 +565,7 @@ int MyThread::checkSearch(Pos& ret, int origin, int key, int deep, int rec, int 
     // 获取着法
     for (i = 0; i < 15; i++){
         for (j = 0; j < 15; j++){
-            if(vis[2][i][j] >= 2 && chess[i][j] == 0){
+            if((vis[2][i][j] >= 2 || (vis[2][i][j] >= 1 && depth==deep)) && chess[i][j] == 0){
                 // 算杀的结点选择
                 // 进攻方：活三、冲四、活四、五连、防守对方的冲四
                 // 防守方：防守对方的活三、冲四，自身的冲四
@@ -633,7 +633,7 @@ int MyThread::checkSearch(Pos& ret, int origin, int key, int deep, int rec, int 
             else if(attackQueue[i].a3 >= 100){
                 dx = abs(attackQueue[i].x - attackQueue[0].x);
                 dy = abs(attackQueue[i].y - attackQueue[0].y);
-                if((dx == dy && dx <= 3) || (dx == 0 && dy <= 3) || (dy == 0 && dx <= 3))
+                if((dx == dy && dx <= 4) || (dx == 0 && dy <= 4) || (dy == 0 && dx <= 4))
                     vec_moves.push_back(attackQueue[i]);
             }
         }
@@ -796,7 +796,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
                     else if(attackQueue[i].a3 >= 100){
                         dx = abs(attackQueue[i].x - attackQueue[0].x);
                         dy = abs(attackQueue[i].y - attackQueue[0].y);
-                        if((dx == dy && dx <= 3) || (dx == 0 && dy <= 3) || (dy == 0 && dx <= 3))
+                        if((dx == dy && dx <= 4) || (dx == 0 && dy <= 4) || (dy == 0 && dx <= 4))
                             tmp.push_back(attackQueue[i]);
                     }
                 }
@@ -815,7 +815,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
                     else if(attackQueue[i].a3 >= 100){
                         dx = abs(attackQueue[i].x - attackQueue[0].x);
                         dy = abs(attackQueue[i].y - attackQueue[0].y);
-                        if((dx == dy && dx <= 3) || (dx == 0 && dy <= 3) || (dy == 0 && dx <= 3))
+                        if((dx == dy && dx <= 4) || (dx == 0 && dy <= 4) || (dy == 0 && dx <= 4))
                             vec_moves.push_back(attackQueue[i]);
                     }
                 }
@@ -861,6 +861,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
         if(move.value > cur){
             cur = move.value;
 
+            // 更新最优解
             if(move.value > alpha){
                 alpha = move.value;
                 hashf = HASH_EXACT;
@@ -869,6 +870,7 @@ int MyThread::MT(Pos& ret, int key, int deep, int alpha, int beta, QVector<Pos>&
                 update(mutex, ret, move);
             }
 
+            // 剪枝
             if(move.value >= beta){
                 ABcut++;
                 if(runing) store(mutex, HASH_BETA, hashIndex, move, deep);
@@ -956,17 +958,17 @@ int MyThread::evaluate(int key)
     int o_prior=0, d_prior=0, o_val=0, d_val=0, p;
 
     FF(0, N, 0, N){
-            if(chess[i][j] == 3-key)
-            {
-                o_val = Max(o_val, valueChess(i, j, 3-key, &p));
-                o_prior =  Max(o_prior, p);
+        if(chess[i][j] == 3-key)
+        {
+            o_val += (o_val, valueChess(i, j, 3-key, &p));
+            o_prior =  Max(o_prior, p);
 
-            }
-            if(chess[i][j] == key){
-                d_val = Max(d_val,valueChess(i, j, key, &p));
-                d_prior = Max(d_prior, p);
-            }
         }
+        if(chess[i][j] == key){
+            d_val += (d_val,valueChess(i, j, key, &p));
+            d_prior = Max(d_prior, p);
+        }
+    }
     // 后手方五连
     if (d_prior >= 10000)
         return R_INFINTETY;
@@ -983,8 +985,6 @@ int MyThread::evaluate(int key)
     if(o_prior >= 10000 && d_prior >= 10000)
         return -R_INFINTETY;
 
-    if(d_prior > 0 && d_prior < 100)  d_val *= 1.5;
-    if(o_prior > 0 && o_prior < 100)  o_val *= 1.5;
     return d_val - o_val;
 }
 

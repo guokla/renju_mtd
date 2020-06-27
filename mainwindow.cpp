@@ -539,7 +539,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
             temp.sprintf("[kill: 深度%d,%2d,%2d] = %3d, time: %.3f s\n", depth, newMove.x, newMove.y, newMove.value, t2.elapsed()/1000.0);
             buffer += temp;
             if(newMove.value < R_INFINTETY){
-                if(newMove.value < 200 && depth >= 4)
+                if(newMove.value < 200 && depth >= 4 && limit_kill >= 5*t2.elapsed())
                     depth += delta*2;
                 else
                     depth += delta;
@@ -645,7 +645,7 @@ void MainWindow::callFunction(Pos& newMove, int flag, const int& judge){
                     checkWinner(result.x, result.y, true);
                     hold = EXCHANGE - hold;
                     QString temp;
-                    temp.sprintf("[MTD: 深度%d] = time: %.3f s\nCount=%d, ABCut=%d\nTarget=%d, Store=%d\n\n", depth, t2.elapsed()/1000.0, Count, ABcut, tag, sto);
+                    temp.sprintf("[MTD: 深度%d] = timeout: %.3f s\nCount=%d, ABCut=%d\nTarget=%d, Store=%d\n\n", depth, t2.elapsed()/1000.0, Count, ABcut, tag, sto);
                     buffer += temp;
                     result.x = 0;
                     return;

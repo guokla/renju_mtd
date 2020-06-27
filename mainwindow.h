@@ -60,12 +60,6 @@ const long long HASH_TABLE_SIZE = 1 << 22;    // 哈希表大小
 //const int chessValue[] = {1,2,2,3,4,5,6,250,600,1000,2000};
 const int chessValue[] = {2,8,8,16,32,48,64,250,600,1000,2000};
 
-#define ONE   1
-#define TWO   10
-#define THREE 100
-#define FOUR  1000
-#define FIVE  10000
-
 #define WIDTH_W 1200        // 窗口宽度
 #define HEIGH_W 800         // 窗口高度
 
